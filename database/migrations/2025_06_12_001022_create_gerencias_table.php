@@ -10,7 +10,7 @@ return new class extends Migration {
         Schema::create('gerencias', function (Blueprint $table) {
             $table->id();
             $table->string('nombre')->unique();
-            $table->foreignId('unidad_administrativa_id')->constrained()->onDelete('cascade');
+            $table->foreignId('unidad_administrativa_id')->constrained('unidades_administrativas')->onDelete('cascade');
             $table->foreignId('user_id')
                 ->nullable()
                 ->unique()
