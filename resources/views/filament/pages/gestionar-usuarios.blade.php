@@ -9,9 +9,15 @@
                     Cancelar
                 </x-filament::button>
 
-                <x-filament::button type="submit">
-                    Guardar usuario
-                </x-filament::button>
+                <div class="flex gap-6">
+                    <x-filament::button type="button" color="danger" wire:click="removeKey">
+                        Quitar gerencia
+                    </x-filament::button>
+
+                    <x-filament::button type="submit">
+                        Guardar usuario
+                    </x-filament::button>
+                </div>
             </div>
         </form>
     </x-filament::card>

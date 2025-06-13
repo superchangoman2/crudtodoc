@@ -3,18 +3,16 @@
 namespace App\Filament\Pages;
 
 use App\Models\Gerencia;
-use App\Models\UnidadAdministrativa;
 use App\Models\User;
 use Filament\Pages\Page;
 use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
-use Illuminate\Support\Facades\Hash;
 use Filament\Notifications\Notification;
-use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Contracts\HasForms;
 
-class GestionarUsuarios extends Page implements Forms\Contracts\HasForms
+class GestionarUsuarios extends Page implements HasForms
 {
     use Forms\Concerns\InteractsWithForms;
 
@@ -76,6 +74,19 @@ class GestionarUsuarios extends Page implements Forms\Contracts\HasForms
         ];
     }
 
+    public function removeKey()
+    {
+        $this->user->gerencia_id = null;
+        $this->user->save();
+
+        Notification::make()
+            ->title('Gerencia retirada del usuario')
+            ->success()
+            ->send();
+
+        return redirect()->route('filament.admin.pages.user-management-panel');
+    }
+
     public function submit()
     {
         $data = $this->form->getState();
@@ -89,7 +100,8 @@ class GestionarUsuarios extends Page implements Forms\Contracts\HasForms
             ->success()
             ->send();
 
-        return redirect()->route('filament.admin.pages.user-admin-panel');
+        return redirect()->route('filament.admin.pages.user-management-panel');
+
     }
 
     public static function shouldRegisterNavigation(): bool
