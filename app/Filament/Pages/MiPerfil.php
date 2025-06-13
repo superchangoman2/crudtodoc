@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Gerencia;
 use Filament\Pages\Page;
 use Filament\Forms;
 use Illuminate\Support\Facades\Hash;
@@ -23,21 +24,50 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
     public $new_password_confirmation;
     public bool $modoEdicion = false;
 
+    public $rol;
+    public $extra;
+    public string $extraLabel = '';
+    public $unidad;
+    public $esGerente;
+
+
     public function mount(): void
     {
         $user = auth()->user();
 
+        $this->name = $user->name;
+        $this->email = $user->email;
+        $this->rol = $user->roles->pluck('name')->first();
+
+        if ($user->hasRole('gerente')) {
+            $gerencia = $user->gerenciaQueDirige;
+            $this->extraLabel = 'Gerencia dirigida';
+            $this->extra = $gerencia?->nombre;
+
+        } elseif ($user->hasRole('usuario')) {
+            $gerencia = $user->gerencia;
+            $this->extraLabel = 'Gerencia adscrita';
+            $this->extra = $gerencia?->nombre;
+
+        } elseif ($user->hasRole('administrador-unidad')) {
+            $this->extraLabel = 'Unidad administrada';
+            $this->extra = $user->unidadAdministrativa?->nombre;
+        } else {
+            $this->extraLabel = '---';
+            $this->extra = null;
+        }
+
         $this->form->fill([
-            'name' => $user->name,
-            'email' => $user->email,
+            'name' => $this->name,
+            'email' => $this->email,
         ]);
     }
-
     protected function getFormSchema(): array
     {
         if (!$this->modoEdicion) {
             return [];
         }
+
         return [
             Forms\Components\TextInput::make('name')->label('Nombre')->required(),
             Forms\Components\TextInput::make('email')->label('Correo')->email()->required(),
@@ -98,7 +128,6 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
             ->title('Perfil actualizado')
             ->success()
             ->send();
-
     }
 
     protected function messages(): array
@@ -114,9 +143,9 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
     {
         return auth()->check();
     }
+
     public static function canAccess(): bool
     {
         return auth()->check();
     }
-
 }

@@ -39,7 +39,7 @@ class GestionarUsuarios extends Page implements HasForms
             'name' => $this->user->name,
             'email' => $this->user->email,
             'role' => $rolUsuario,
-            'unidad_id' => $this->user->unidad_administrativa_id,
+            'unidad_id' => $this->user->unidades_administrativas_id,
             'gerencia_id' => $this->user->gerencia_id,
         ]);
     }

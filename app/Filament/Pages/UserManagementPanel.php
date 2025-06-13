@@ -24,19 +24,54 @@ class UserManagementPanel extends Page implements HasTable
 
     public function getTableQuery(): Builder
     {
-        return User::query()
-            ->whereHas('roles', function ($query) {
-                if (auth()->user()->hasRole('admin')) {
-                    $query->whereIn('name', ['administrador-unidad', 'gerente', 'usuario']);
-                } elseif (auth()->user()->hasRole('administrador-unidad')) {
-                    $query->whereIn('name', ['gerente', 'usuario']);
-                } elseif (auth()->user()->hasRole('gerente')) {
-                    $query->whereIn('name', ['usuario']);
-                }
-            })
-            ->with(['roles', 'gerencia', 'unidadAdministrativa', 'gerenciaQueDirige']);
+        $authUser = auth()->user();
 
+        if ($authUser->hasRole('admin')) {
+            return User::query()
+                ->whereHas('roles', fn($q) => $q->whereIn('name', ['administrador-unidad', 'gerente', 'usuario']))
+                ->with(['roles', 'gerencia', 'unidadAdministrativa']);
+        }
+
+        if ($authUser->hasRole('administrador-unidad')) {
+            $unidadId = $authUser->unidadAdministrativa?->id;
+
+            return User::query()
+                ->where(function ($query) use ($unidadId) {
+                    // Gerentes con gerencia en su unidad o sin gerencia
+                    $query->where(function ($q) use ($unidadId) {
+                        $q->whereHas('roles', fn($r) => $r->where('name', 'gerente'))
+                            ->where(function ($g) use ($unidadId) {
+                                $g->whereHas('gerenciaQueDirige', fn($h) => $h->where('unidades_administrativas_id', $unidadId))
+                                    ->orWhereDoesntHave('gerenciaQueDirige');
+                            });
+                    })
+                        // Usuarios con gerencia en su unidad o sin gerencia
+                        ->orWhere(function ($q) use ($unidadId) {
+                        $q->whereHas('roles', fn($r) => $r->where('name', 'usuario'))
+                            ->where(function ($u) use ($unidadId) {
+                                $u->whereHas('gerencia', fn($g) => $g->where('unidades_administrativas_id', $unidadId))
+                                    ->orWhereNull('gerencia_id');
+                            });
+                    });
+                })
+                ->with(['roles', 'gerencia', 'unidadAdministrativa']);
+        }
+
+        if ($authUser->hasRole('gerente')) {
+            $gerenciaId = $authUser->gerenciaQueDirige?->id;
+
+            return User::query()
+                ->whereHas('roles', fn($q) => $q->where('name', 'usuario'))
+                ->where(function ($q) use ($gerenciaId) {
+                    $q->where('gerencia_id', $gerenciaId)
+                        ->orWhereNull('gerencia_id');
+                })
+                ->with(['roles', 'gerencia', 'unidadAdministrativa']);
+        }
+
+        return User::query()->whereRaw('0 = 1'); // No accede si no tiene rol permitido
     }
+
 
     public function getTableColumns(): array
     {
@@ -67,7 +102,6 @@ class UserManagementPanel extends Page implements HasTable
                     $usuario = auth()->user();
                     return $usuario && $usuario->hasAnyRole(['admin', 'administrador-unidad']);
                 }),
-
 
             TextColumn::make('unidadAdministrativa.nombre')
                 ->label('Unidad Administrativa')
