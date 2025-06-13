@@ -4,12 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use App\Models\Gerencia;
 use App\Models\TipoActividad;
 
 class Actividad extends Model
 {
+    use SoftDeletes;
+    protected $fillable = [
+        'titulo',
+        'descripcion',
+        'fecha',
+        'user_id',
+        'gerencia_id',
+        'tipo_actividad_id',
+    ];
+    protected $table = 'actividades';
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

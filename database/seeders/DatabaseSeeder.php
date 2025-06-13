@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             GerenciasSeeder::class,
             UnidadesAdministrativasSeeder::class,
             TiposActividadesSeeder::class,
+            ActividadesSeeder::class,
         ]);
     }
 }
