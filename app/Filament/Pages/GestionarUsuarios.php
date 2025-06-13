@@ -16,10 +16,10 @@ class GestionarUsuarios extends Page implements HasForms
 {
     use Forms\Concerns\InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-user-plus';
     protected static ?string $navigationLabel = null;
     protected static ?string $title = 'Gestionar Gerencia';
     protected static string $view = 'filament.pages.gestionar-usuarios';
+
 
     public $user;
     public $name, $email, $role;

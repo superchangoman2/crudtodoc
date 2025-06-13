@@ -25,6 +25,7 @@ class TipoActividadResource extends Resource
 {
     protected static ?string $model = TipoActividad::class;
 
+    protected static ?int $navigationSort = 6;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationLabel = 'Tipo de Actividades';
     protected static ?string $pluralModelLabel = 'Tipo de Actividades';

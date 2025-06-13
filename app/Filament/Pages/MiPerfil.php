@@ -12,10 +12,12 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
 
+    protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-user';
     protected static ?string $navigationLabel = 'Mi perfil';
     protected static ?string $title = 'Mi perfil';
     protected static string $view = 'filament.pages.mi-perfil';
+    protected static ?string $navigationGroup = 'Usuarios y Accesos';
 
     public $name;
     public $email;

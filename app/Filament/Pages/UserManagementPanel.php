@@ -17,10 +17,11 @@ class UserManagementPanel extends Page implements HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static ?string $navigationLabel = 'Gestión de Usuarios';
-    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?int $navigationSort = 3;
+    protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
+    protected static ?string $navigationGroup = 'Usuarios y Accesos';
     protected static string $view = 'filament.pages.user-management-panel';
-    protected static ?string $title = 'Gestión de Usuarios';
+    protected static ?string $title = 'Gestión de usuarios';
 
     public function getTableQuery(): Builder
     {

@@ -32,8 +32,9 @@ use Filament\Tables\Actions\ForceDeleteBulkAction;
 
 class ActividadResource extends Resource
 {
+    protected static ?int $navigationSort = 4;
     protected static ?string $model = Actividad::class;
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationLabel = 'Actividades';
     protected static ?string $pluralModelLabel = 'Actividades';
     protected static ?string $navigationGroup = 'Registros';
