@@ -58,32 +58,16 @@ class User extends Authenticatable
 
     public function gerencia(): BelongsTo
     {
-        return $this->belongsTo(Gerencia::class); // si el usuario está adscrito a alguna gerencia
+        return $this->belongsTo(Gerencia::class);
     }
 
     public function gerenciaQueDirige(): HasOne
     {
-        return $this->hasOne(Gerencia::class, 'user_id'); // si es el gerente de alguna gerencia
+        return $this->hasOne(Gerencia::class, 'user_id');
     }
 
     public function unidadAdministrativa(): BelongsTo
     {
         return $this->belongsTo(UnidadAdministrativa::class);
-    }
-
-    // Revision de permisos y roles
-    public function esAdmin(): bool
-    {
-        return $this->hasRole('admin');
-    }
-
-    public function esAdministradorUnidad(): bool
-    {
-        return $this->hasAnyRole(['admin', 'administrador-unidad']);
-    }
-
-    public function esGerente(): bool
-    {
-        return $this->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
     }
 }

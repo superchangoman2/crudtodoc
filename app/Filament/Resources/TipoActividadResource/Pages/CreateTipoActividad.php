@@ -9,5 +9,10 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateTipoActividad extends CreateRecord
 {
     protected static string $resource = TipoActividadResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return static::getResource()::getUrl('index');
+    }
 }
 
