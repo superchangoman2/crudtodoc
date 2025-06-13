@@ -3,23 +3,19 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UnidadAdministrativaResource\Pages;
-use App\Filament\Resources\UnidadAdministrativaResource\RelationManagers;
 use App\Models\UnidadAdministrativa;
-use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\DeleteAction;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\TextInput;
+use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
 
 class UnidadAdministrativaResource extends Resource
 {
@@ -41,7 +37,25 @@ class UnidadAdministrativaResource extends Resource
                     ->minLength(5)
                     ->maxLength(255)
                     ->rule('string')
-                    ->unique(ignoreRecord: true)
+                    ->unique(ignoreRecord: true),
+
+                Placeholder::make('gerencias_list')
+                    ->label('Gerencias asignadas')
+                    ->content(function ($record) {
+                        if (!$record || !$record->exists) {
+                            return null;
+                        }
+
+                        if ($record->gerencias->isEmpty()) {
+                            return 'Sin gerencias asignadas.';
+                        }
+
+                        return $record->gerencias
+                            ->pluck('nombre')
+                            ->map(fn($g) => "• $g ")
+                            ->implode("\n");
+                    })
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -53,6 +67,10 @@ class UnidadAdministrativaResource extends Resource
                     ->label('Nombre')
                     ->sortable()
                     ->searchable(),
+                TextColumn::make('gerencias_count')
+                    ->label('#Gerencias')
+                    ->sortable()
+                    ->counts('gerencias'),
                 TextColumn::make('created_at')
                     ->label('Registrado el')
                     ->dateTime('d M Y, H:i')
