@@ -34,7 +34,7 @@ class GestionarUsuarios extends Page implements Forms\Contracts\HasForms
         $rolUsuario = $this->user->roles->pluck('name')->first();
 
         if ($rolUsuario !== 'usuario') {
-            redirect()->route('filament.admin.pages.user-admin-panel')->send();
+            redirect()->route('filament.admin.pages.user-management-panel')->send();
         }
 
         $this->form->fill([

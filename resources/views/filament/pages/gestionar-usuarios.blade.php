@@ -5,7 +5,7 @@
 
             <div class="mt-6 flex justify-between">
                 <x-filament::button type="button" color="gray" tag="a"
-                    href="{{ route('filament.admin.pages.user-admin-panel') }}">
+                    href="{{ route('filament.admin.pages.user-management-panel') }}">
                     Cancelar
                 </x-filament::button>
 

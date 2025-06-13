@@ -14,20 +14,20 @@ use Filament\Forms\Components\Select;
 use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
 
-class UserAdminPanel extends Page implements Tables\Contracts\HasTable
+class UserManagementPanel extends Page implements Tables\Contracts\HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
     protected static ?string $navigationLabel = 'Gestión de Usuarios';
     protected static ?string $navigationIcon = 'heroicon-o-users';
-    protected static string $view = 'filament.pages.user-admin-panel';
+    protected static string $view = 'filament.pages.user-management-panel';
     protected static ?string $title = 'Gestión de Usuarios';
 
     public function getTableQuery(): Builder
     {
         return User::query()
             ->whereHas('roles', fn($query) => $query->where('name', 'usuario'))
-            ->with(['roles', 'gerencia', 'unidadAdministrativa']);
+            ->with(['roles', 'gerencia']);
     }
 
 
