@@ -41,7 +41,7 @@ class UserManagementPanel extends Page implements HasTable
                     $query->where(function ($q) use ($unidadId) {
                         $q->whereHas('roles', fn($r) => $r->where('name', 'gerente'))
                             ->where(function ($g) use ($unidadId) {
-                                $g->whereHas('gerenciaQueDirige', fn($h) => $h->where('unidades_administrativas_id', $unidadId))
+                                $g->whereHas('gerenciaQueDirige', fn($h) => $h->where('unidad_administrativa_id', $unidadId))
                                     ->orWhereDoesntHave('gerenciaQueDirige');
                             });
                     })
@@ -49,7 +49,7 @@ class UserManagementPanel extends Page implements HasTable
                         ->orWhere(function ($q) use ($unidadId) {
                         $q->whereHas('roles', fn($r) => $r->where('name', 'usuario'))
                             ->where(function ($u) use ($unidadId) {
-                                $u->whereHas('gerencia', fn($g) => $g->where('unidades_administrativas_id', $unidadId))
+                                $u->whereHas('gerencia', fn($g) => $g->where('unidad_administrativa_id', $unidadId))
                                     ->orWhereNull('gerencia_id');
                             });
                     });

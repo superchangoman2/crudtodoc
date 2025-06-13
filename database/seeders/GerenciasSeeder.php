@@ -71,7 +71,7 @@ class GerenciasSeeder extends Seeder
             foreach ($gerencias as $nombreGerencia) {
                 Gerencia::firstOrCreate(
                     ['nombre' => $nombreGerencia],
-                    ['unidades_administrativas_id' => $unidad->id]
+                    ['unidad_administrativa_id' => $unidad->id]
                 );
             }
         }

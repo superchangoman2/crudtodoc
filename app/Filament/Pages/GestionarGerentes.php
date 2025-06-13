@@ -51,9 +51,41 @@ class GestionarGerentes extends Page implements HasForms
 
             Select::make('gerencia_id')
                 ->label('Gerencia a dirigir')
-                ->options(Gerencia::pluck('nombre', 'id'))
+                ->options(function () {
+                    $user = auth()->user();
+
+                    if ($user->hasRole('admin')) {
+                        return Gerencia::pluck('nombre', 'id');
+                    }
+
+                    if ($user->hasRole('administrador-unidad')) {
+                        $unidadId = $user->unidadAdministrativa?->id;
+
+                        if (!$unidadId) {
+                            return [];
+                        }
+
+                        return Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('nombre', 'id');
+                    }
+
+                    return [];
+                })
+                ->disabled(function () {
+                    $user = auth()->user();
+
+                    if ($user->hasRole('admin')) {
+                        return false;
+                    }
+
+                    if ($user->hasRole('administrador-unidad')) {
+                        return $user->unidadAdministrativa === null;
+                    }
+
+                    return true;
+                })
                 ->nullable()
                 ->placeholder('Selecciona una gerencia'),
+
         ];
     }
 

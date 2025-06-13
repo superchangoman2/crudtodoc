@@ -38,7 +38,7 @@ class GestionarUnidades extends Page implements HasForms
             'name' => $this->user->name,
             'email' => $this->user->email,
             'role' => $rolUsuario,
-            'unidad_id' => $this->user->unidades_administrativas_id,
+            'unidad_id' => $this->user->unidad_administrativa_id,
         ]);
     }
 
@@ -71,7 +71,7 @@ class GestionarUnidades extends Page implements HasForms
 
     public function removeKey()
     {
-        $this->user->unidades_administrativas_id = null;
+        $this->user->unidad_administrativa_id = null;
         $this->user->save();
 
         Notification::make()
@@ -86,7 +86,7 @@ class GestionarUnidades extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        $this->user->unidades_administrativas_id = $data['unidad_id'];
+        $this->user->unidad_administrativa_id = $data['unidad_id'];
         $this->user->save();
 
         Notification::make()

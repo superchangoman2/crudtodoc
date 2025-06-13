@@ -39,7 +39,7 @@ class GestionarUsuarios extends Page implements HasForms
             'name' => $this->user->name,
             'email' => $this->user->email,
             'role' => $rolUsuario,
-            'unidad_id' => $this->user->unidades_administrativas_id,
+            'unidad_id' => $this->user->unidad_administrativa_id,
             'gerencia_id' => $this->user->gerencia_id,
         ]);
     }
@@ -67,7 +67,52 @@ class GestionarUsuarios extends Page implements HasForms
 
             Select::make('gerencia_id')
                 ->label('Gerencia adscrita')
-                ->options(Gerencia::pluck('nombre', 'id'))
+                ->options(function () {
+                    $user = auth()->user();
+
+                    if ($user->hasRole('admin')) {
+                        return Gerencia::pluck('nombre', 'id');
+                    }
+
+                    if ($user->hasRole('administrador-unidad')) {
+                        $unidadId = $user->unidadAdministrativa?->id;
+
+                        if (!$unidadId) {
+                            return [];
+                        }
+
+                        return Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('nombre', 'id');
+                    }
+
+                    if ($user->hasRole('gerente')) {
+                        $gerencia = $user->gerenciaQueDirige;
+
+                        if (!$gerencia) {
+                            return [];
+                        }
+
+                        return Gerencia::where('id', $gerencia->id)->pluck('nombre', 'id');
+                    }
+
+                    return [];
+                })
+                ->disabled(function () {
+                    $user = auth()->user();
+
+                    if ($user->hasRole('admin')) {
+                        return false;
+                    }
+
+                    if ($user->hasRole('administrador-unidad')) {
+                        return $user->unidadAdministrativa === null;
+                    }
+
+                    if ($user->hasRole('gerente')) {
+                        return $user->gerenciaQueDirige === null;
+                    }
+
+                    return true;
+                })
                 ->placeholder('Selecciona una gerencia')
                 ->nullable(),
 
