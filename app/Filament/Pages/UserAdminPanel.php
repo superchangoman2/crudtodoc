@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\User;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Auth;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -24,8 +25,11 @@ class UserAdminPanel extends Page implements Tables\Contracts\HasTable
 
     public function getTableQuery(): Builder
     {
-        return User::query()->with(['roles', 'gerencia', 'unidadAdministrativa']);
+        return User::query()
+            ->whereHas('roles', fn($query) => $query->where('name', 'usuario'))
+            ->with(['roles', 'gerencia', 'unidadAdministrativa']);
     }
+
 
     public function getTableColumns(): array
     {
@@ -42,52 +46,29 @@ class UserAdminPanel extends Page implements Tables\Contracts\HasTable
                 ->searchable()
                 ->formatStateUsing(fn($state) => ucfirst($state)),
 
-            TextColumn::make('unidadAdministrativa.nombre')
-                ->label('Unidad')
-                ->searchable(),
-
             TextColumn::make('gerencia.nombre')
                 ->label('Gerencia')
                 ->searchable(),
         ];
     }
 
-
-    public function getTableFilters(): array
-    {
-        return [
-            Filter::make('rol')
-                ->form([
-                    Select::make('value')
-                        ->label('Rol')
-                        ->options([
-                            'admin' => 'Administrador',
-                            'administrador-unidad' => 'Administrador de Unidad',
-                            'gerente' => 'Gerente',
-                            'usuario' => 'Usuario',
-                        ])
-                        ->placeholder('Selecciona un rol')
-                ])
-                ->query(function (Builder $query, array $data): Builder {
-                    return $query->when($data['value'], function ($query, $value) {
-                        return $query->whereHas('roles', fn($q) => $q->where('name', $value));
-                    });
-                })
-                ->indicateUsing(function (array $data): ?string {
-                    if (!$data['value'])
-                        return null;
-
-                    return 'Rol: ' . ucfirst($data['value']);
-                }),
-        ];
-    }
     public function getTableActions(): array
     {
         return [
             Action::make('gestionar')
                 ->label('Gestionar')
-                ->url(fn(User $record) => route('filament.admin.pages.administrar-usuarios', ['user' => $record->id]))
+                ->url(fn(User $record) => route('filament.admin.pages.gestionar-usuarios', ['user' => $record->id]))
                 ->icon('heroicon-o-cog-6-tooth'),
         ];
+    }
+
+    public static function canAccess(): bool
+    {
+        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
+    }
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
     }
 }

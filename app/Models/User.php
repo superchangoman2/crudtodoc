@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -57,14 +58,18 @@ class User extends Authenticatable
 
     public function gerencia(): BelongsTo
     {
-        return $this->belongsTo(Gerencia::class);
+        return $this->belongsTo(Gerencia::class); // si el usuario está adscrito a alguna gerencia
+    }
+
+    public function gerenciaQueDirige(): HasOne
+    {
+        return $this->hasOne(Gerencia::class, 'user_id'); // si es el gerente de alguna gerencia
     }
 
     public function unidadAdministrativa(): BelongsTo
     {
         return $this->belongsTo(UnidadAdministrativa::class);
     }
-
 
     // Revision de permisos y roles
     public function esAdmin(): bool

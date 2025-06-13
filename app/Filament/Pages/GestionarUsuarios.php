@@ -14,14 +14,14 @@ use Filament\Notifications\Notification;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Auth;
 
-class AdministrarUsuarios extends Page implements Forms\Contracts\HasForms
+class GestionarUsuarios extends Page implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-plus';
     protected static ?string $navigationLabel = null;
-    protected static ?string $title = 'Administrar Usuario';
-    protected static string $view = 'filament.pages.administrar-usuarios';
+    protected static ?string $title = 'Gestionar Gerencia';
+    protected static string $view = 'filament.pages.gestionar-usuarios';
 
     public $user;
     public $name, $email, $role;
@@ -31,10 +31,16 @@ class AdministrarUsuarios extends Page implements Forms\Contracts\HasForms
     {
         $this->user = User::findOrFail(request()->get('user'));
 
+        $rolUsuario = $this->user->roles->pluck('name')->first();
+
+        if ($rolUsuario !== 'usuario') {
+            redirect()->route('filament.admin.pages.user-admin-panel')->send();
+        }
+
         $this->form->fill([
             'name' => $this->user->name,
             'email' => $this->user->email,
-            'role' => $this->user->roles->pluck('name')->first(),
+            'role' => $rolUsuario,
             'unidad_id' => $this->user->unidad_administrativa_id,
             'gerencia_id' => $this->user->gerencia_id,
         ]);
@@ -42,8 +48,6 @@ class AdministrarUsuarios extends Page implements Forms\Contracts\HasForms
 
     public function getFormSchema(): array
     {
-        $esAdmin = Auth::user()?->hasRole('admin');
-        $esUnidad = Auth::user()?->hasRole('administrador-unidad');
         $rolUsuario = $this->user->roles->pluck('name')->first();
 
         return [
@@ -63,21 +67,12 @@ class AdministrarUsuarios extends Page implements Forms\Contracts\HasForms
                 ->disabled()
                 ->dehydrated(false),
 
-            Select::make('unidad_id')
-                ->label('Unidad Administrativa')
-                ->options(UnidadAdministrativa::pluck('nombre', 'id'))
-                ->hidden(!($rolUsuario === 'administrador-unidad' && $esAdmin)),
-
             Select::make('gerencia_id')
-                ->label(
-                    $rolUsuario === 'gerente' ? 'Gerencia a dirigir' :
-                    ($rolUsuario === 'usuario' ? 'Gerencia adscrita' : 'Gerencia')
-                )
+                ->label('Gerencia adscrita')
                 ->options(Gerencia::pluck('nombre', 'id'))
-                ->hidden(!(
-                    ($rolUsuario === 'gerente' && ($esAdmin || $esUnidad)) ||
-                    ($rolUsuario === 'usuario' && ($esAdmin || $esUnidad))
-                )),
+                ->placeholder('Selecciona una gerencia')
+                ->nullable(),
+
         ];
     }
 
@@ -85,14 +80,8 @@ class AdministrarUsuarios extends Page implements Forms\Contracts\HasForms
     {
         $data = $this->form->getState();
 
-        if ($this->user->hasRole('administrador-unidad')) {
-            $this->user->unidad_administrativa_id = $data['unidad_id'];
-        }
-
-        if ($this->user->hasRole('gerente') || $this->user->roles->isEmpty()) {
-            $this->user->gerencia_id = $data['gerencia_id'];
-        }
-
+        // Solo actualiza la gerencia_id, que puede ser null
+        $this->user->gerencia_id = $data['gerencia_id'];
         $this->user->save();
 
         Notification::make()
@@ -110,6 +99,7 @@ class AdministrarUsuarios extends Page implements Forms\Contracts\HasForms
 
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()?->hasRole('admin');
+        return Auth::check() && Auth::user()?->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
     }
+
 }

@@ -14,7 +14,6 @@ class DatabaseSeeder extends Seeder
             TestUsersSeeder::class,
             GerenciasSeeder::class,
             UnidadesAdministrativasSeeder::class,
-            AsignarGerenciasSeeder::class,
         ]);
     }
 }

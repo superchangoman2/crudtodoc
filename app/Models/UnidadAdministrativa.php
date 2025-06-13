@@ -15,4 +15,9 @@ class UnidadAdministrativa extends Model
     {
         return $this->hasMany(Gerencia::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

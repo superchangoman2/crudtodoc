@@ -12,11 +12,16 @@ class Gerencia extends Model
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class); // usuarios comunes de la gerencia
     }
+
+    public function gerente(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id'); // usuario gerente único
+    }
+
     public function unidadAdministrativa(): BelongsTo
     {
         return $this->belongsTo(UnidadAdministrativa::class);
     }
-
 }
