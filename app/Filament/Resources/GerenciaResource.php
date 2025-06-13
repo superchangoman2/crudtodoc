@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\GerenciaResource\Pages;
 use App\Filament\Resources\GerenciaResource\RelationManagers;
 use App\Models\Gerencia;
+use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
@@ -47,7 +48,34 @@ class GerenciaResource extends Resource
                     ->relationship('unidadAdministrativa', 'nombre')
                     ->required()
                     ->searchable()
-                    ->preload()
+                    ->preload(),
+                Select::make('user_id')
+                    ->label('Responsable (Gerente)')
+                    ->options(function () {
+                        $gerentesDisponibles = User::whereHas('roles', fn($q) => $q->where('name', 'gerente'))
+                            ->whereDoesntHave('gerenciaQueDirige')
+                            ->get();
+
+                        $actual = null;
+                        if ($record = request()->route('record')) {
+                            $actual = Gerencia::find($record)?->gerente;
+                        }
+
+                        $gerentes = $actual
+                            ? $gerentesDisponibles->push($actual)->unique('id')
+                            : $gerentesDisponibles;
+
+                        return $gerentes->mapWithKeys(fn($user) => [
+                            $user->id => "{$user->id} – {$user->name} – {$user->email}"
+                        ]);
+                    })
+                    ->searchable()
+                    ->nullable()
+                    ->helperText('Selecciona un gerente sin gerencia asignada')
+                    ->rules([
+                        'nullable',
+                        'unique:gerencias,user_id' . (request()->route('record') ? ',' . request()->route('record') : ''),
+                    ])
             ]);
     }
 
@@ -102,7 +130,6 @@ class GerenciaResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
         ];
     }
 
