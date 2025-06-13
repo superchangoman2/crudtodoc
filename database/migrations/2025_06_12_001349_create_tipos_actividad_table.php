@@ -10,6 +10,8 @@ return new class extends Migration {
         Schema::create('tipos_actividades', function (Blueprint $table) {
             $table->id();
             $table->string('nombre')->unique();
+            $table->softDeletes();
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->timestamps();
         });
     }

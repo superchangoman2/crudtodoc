@@ -10,6 +10,13 @@ return new class extends Migration {
         Schema::create('unidades_administrativas', function (Blueprint $table) {
             $table->id();
             $table->string('nombre')->unique();
+            $table->foreignId('user_id')
+                ->unique() // DUDA: ¿Debería ser único? ¿O debería permitir que un usuario administre varias unidades administrativas?
+                ->nullable()
+                ->constrained('users')
+                ->onDelete('set null'); // DUDA: Por ahora si se elimina el usuario, se deja la unidad administrativa sin usuario asignado.
+            $table->softDeletes();
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->timestamps();
         });
 

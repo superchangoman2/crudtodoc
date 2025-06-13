@@ -10,12 +10,16 @@ return new class extends Migration {
         Schema::create('gerencias', function (Blueprint $table) {
             $table->id();
             $table->string('nombre')->unique();
-            $table->foreignId('unidad_administrativa_id')->constrained('unidades_administrativas')->onDelete('cascade');
+            $table->foreignId('unidad_administrativa_id')
+                ->constrained('unidades_administrativas')
+                ->onDelete('restrict');
             $table->foreignId('user_id')
+                ->unique() // DUDA: ¿Debería ser único? ¿O debería permitir que un usuario administre varias gerencias?
                 ->nullable()
-                ->unique()
                 ->constrained('users')
                 ->onDelete('set null');
+            $table->softDeletes();
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->timestamps();
         });
     }

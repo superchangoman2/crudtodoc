@@ -8,15 +8,15 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('actividades', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->bigIncrements('id'); // NOTE: Por si acaso se necesita un ID más grande en el futuro.
+            $table->foreignId('user_id')->constrained()->onDelete('restrict');
             $table->foreignId('gerencia_id')->constrained()->onDelete('restrict');
-            $table->foreignId('tipo_actividad_id')->constrained('tipos_actividades')->onDelete('restrict');
             $table->string('titulo');
             $table->text('descripcion');
             $table->date('fecha');
-            $table->timestamps();
             $table->softDeletes();
+            $table->foreignId('deleted_by')->nullable()->constrained('users');
+            $table->timestamps();
         });
     }
 

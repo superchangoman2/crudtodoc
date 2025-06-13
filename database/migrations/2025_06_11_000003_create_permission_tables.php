@@ -5,6 +5,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
 return new class extends Migration {
+
+    // NOTE: Gestionan internamente los permisos y roles de los usuarios.
     public function up(): void
     {
         Schema::create('permissions', function (Blueprint $table) {
