@@ -2,52 +2,45 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\GerenciaResource\Pages;
-use App\Filament\Resources\GerenciaResource\RelationManagers;
-use App\Models\Gerencia;
+use App\Filament\Resources\TipoActividadResource\Pages;
+use App\Filament\Resources\TipoActividadResource\RelationManagers;
+use App\Models\TipoActividad;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Columns\TextColumn;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class GerenciaResource extends Resource
+class TipoActividadResource extends Resource
 {
-    protected static ?string $model = Gerencia::class;
+    protected static ?string $model = TipoActividad::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationLabel = 'Gerencias';
-    protected static ?string $pluralModelLabel = 'Gerencias';
+    protected static ?string $navigationLabel = 'Tipo de Actividades';
+    protected static ?string $pluralModelLabel = 'Tipo de Actividades';
     protected static ?string $navigationGroup = 'Base de datos';
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 TextInput::make('nombre')
-                    ->label('Nombre de la Gerencia')
-                    ->placeholder('Ej: Gerencia de Tecnología de la Información y Comunicación')
+                    ->label('Tipo de actividad')
+                    ->placeholder('Ej: Sustantiva')
                     ->required()
-                    ->minLength(5)
+                    ->minLength(2)
                     ->maxLength(255)
                     ->rule('string')
-                    ->unique(ignoreRecord: true),
-                Select::make('unidad_administrativa_id')
-                    ->label('Unidad Administrativa')
-                    ->relationship('unidadAdministrativa', 'nombre')
-                    ->required()
-                    ->searchable()
-                    ->preload()
+                    ->unique(ignoreRecord: true)
             ]);
     }
 
@@ -63,18 +56,6 @@ class GerenciaResource extends Resource
                     ->label('Registrado el')
                     ->dateTime('d M Y, H:i')
                     ->sortable(),
-                TextColumn::make('unidadAdministrativa.nombre')
-                    ->label('Unidad Administrativa')
-                    ->sortable()
-                    ->searchable(),
-                TextColumn::make('users_count')
-                    ->label('#Usuarios')
-                    ->sortable()
-                    ->counts('users'),
-                TextColumn::make('gerente.email')
-                    ->label('Correo del responsable')
-                    ->sortable()
-                    ->searchable(),
             ])
             ->filters([
                 Filter::make('created_at')
@@ -109,20 +90,20 @@ class GerenciaResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListGerencias::route('/'),
-            'create' => Pages\CreateGerencia::route('/create'),
-            'edit' => Pages\EditGerencia::route('/{record}/edit'),
+            'index' => Pages\ListTipoActividads::route('/'),
+            'create' => Pages\CreateTipoActividad::route('/create'),
+            'edit' => Pages\EditTipoActividad::route('/{record}/edit'),
         ];
     }
 
     public static function getModelLabel(): string
     {
-        return 'gerencia';
+        return 'tipo actividad';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'gerencias';
+        return 'tipos actividades';
     }
 
     public static function canCreate(): bool

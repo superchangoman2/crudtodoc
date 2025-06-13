@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('gerencia_id')->constrained()->onDelete('restrict');
-            $table->foreignId('tipo_actividad_id')->constrained('tipos_actividad')->onDelete('restrict');
+            $table->foreignId('tipo_actividad_id')->constrained('tipos_actividades')->onDelete('restrict');
             $table->string('titulo');
             $table->text('descripcion');
             $table->date('fecha');

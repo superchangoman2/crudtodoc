@@ -24,6 +24,7 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
     public $new_password_confirmation;
     public bool $modoEdicion = false;
 
+    public $id;
     public $rol;
     public $extra;
     public string $extraLabel = '';
@@ -35,6 +36,7 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
     {
         $user = auth()->user();
 
+        $this->id = $user->id;
         $this->name = $user->name;
         $this->email = $user->email;
         $this->rol = $user->roles->pluck('name')->first();

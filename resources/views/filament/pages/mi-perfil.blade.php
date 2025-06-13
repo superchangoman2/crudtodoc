@@ -3,6 +3,10 @@
         @if (!$this->modoEdicion)
             <dl class="text-base text-white/90 space-y-4">
                 <div>
+                    <dt class="font-semibold text-sm text-white/70">Identificador de usuario</dt>
+                    <dd class="text-lg">{{ $id }}</dd>
+                </div>
+                <div>
                     <dt class="font-semibold text-sm text-white/70">Nombre</dt>
                     <dd class="text-lg">{{ $name }}</dd>
                 </div>

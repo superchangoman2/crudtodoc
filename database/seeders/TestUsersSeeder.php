@@ -54,8 +54,8 @@ class TestUsersSeeder extends Seeder
 
         // Crear usuarios de prueba y asignar roles
         User::factory(2)->create()->each(fn($user) => $user->assignRole($adminRole));
-        User::factory(2)->create()->each(fn($user) => $user->assignRole($unidadRole));
-        User::factory(2)->create()->each(fn($user) => $user->assignRole($gerenteRole));
-        User::factory(5)->create()->each(fn($user) => $user->assignRole($usuarioRole));
+        User::factory(4)->create()->each(fn($user) => $user->assignRole($unidadRole));
+        User::factory(4)->create()->each(fn($user) => $user->assignRole($gerenteRole));
+        User::factory(10)->create()->each(fn($user) => $user->assignRole($usuarioRole));
     }
 }

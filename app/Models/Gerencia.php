@@ -8,16 +8,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Gerencia extends Model
 {
-    protected $fillable = ['nombre'];
+    protected $fillable = ['nombre', 'unidad_administrativa_id'];
 
     public function users(): HasMany
     {
-        return $this->hasMany(User::class); // usuarios comunes de la gerencia
+        return $this->hasMany(User::class);
     }
 
     public function gerente(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'user_id'); // usuario gerente único
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function unidadAdministrativa(): BelongsTo
