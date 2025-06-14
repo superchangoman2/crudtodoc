@@ -1,23 +1,70 @@
+# Dependencias
 /vendor/
 node_modules/
+
+# Archivos de entorno
+.env
+.env.*
+
+# Logs y llaves
 npm-debug.log
 yarn-error.log
+storage/*.key
 
-# Laravel 4 specific
+# Laravel 4 específico
 bootstrap/compiled.php
 app/storage/
 
-# Laravel 5 & Lumen specific
+# Laravel 5 & Lumen específico
 public/storage
 public/hot
 
-# Laravel 5 & Lumen specific with changed public path
+# Laravel con public path alternativo
 public_html/storage
 public_html/hot
 
-storage/*.key
-.env
+# Laravel cache y logs
+/storage/framework/*
+!/storage/framework/.gitignore
+/storage/logs/*
+!/storage/logs/.gitignore
+
+# Compilados y assets generados
+/public/js
+/public/css
+/public/mix-manifest.json
+
+# Testing
+.phpunit.result.cache
+tests/Browser/screenshots/
+tests/Browser/console/
+coverage/
+*.lcov
+
+# Laravel IDE helper
+_ide_helper.php
+.phpstorm.meta.php
+
+# Debugbar y Telescope
+debugbar/
+storage/telescope
+
+# Laravel Vapor
+.vapor/
+
+# Homestead y Vagrant
 Homestead.yaml
 Homestead.json
 /.vagrant
-.phpunit.result.cache
+
+# Docker
+docker-compose.override.yml
+
+# Archivos del editor
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Modelos que generas dinámicamente
+app/Models/User.php
