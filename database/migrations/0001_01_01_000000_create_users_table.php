@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->timestamps();
             $table->rememberToken(); //Guardado en caché
             $table->timestamp('email_verified_at')->nullable(); //NOTE: Se puede implementar verificación de correo electrónico
+            $table->string('rol_cache')->nullable();
         });
 
         // NOTE: Se puede implementar verificación de correo electrónico
