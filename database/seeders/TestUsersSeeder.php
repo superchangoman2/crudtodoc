@@ -14,6 +14,7 @@ class TestUsersSeeder extends Seeder
         $adminRole = Role::firstOrCreate(['name' => 'admin']);
         $unidadRole = Role::firstOrCreate(['name' => 'administrador-unidad']);
         $gerenteRole = Role::firstOrCreate(['name' => 'gerente']);
+        $subgerenteRole = Role::firstOrCreate(['name' => 'subgerente']);
         $usuarioRole = Role::firstOrCreate(['name' => 'usuario']);
 
         // Crear usuarios de prueba fijos
@@ -42,6 +43,14 @@ class TestUsersSeeder extends Seeder
                 'password' => bcrypt('gerente123'),
             ]
         );
+        $subgerente = User::firstOrCreate(
+            ['email' => 'subgerente@example.com'],
+            [
+                'first_name' => 'subgerente',
+                'last_name' => 'trabajador',
+                'password' => bcrypt('subgerente123'),
+            ]
+        );
         $user = User::firstOrCreate(
             ['email' => 'usuario@example.com'],
             [
@@ -60,7 +69,8 @@ class TestUsersSeeder extends Seeder
         // Crear usuarios de prueba y asignar roles
         User::factory(5)->create()->each(fn($user) => $user->assignRole($adminRole));
         User::factory(10)->create()->each(fn($user) => $user->assignRole($unidadRole));
-        User::factory(35)->create()->each(fn($user) => $user->assignRole($gerenteRole));
+        User::factory(20)->create()->each(fn($user) => $user->assignRole($subgerenteRole));
+        User::factory(count: 35)->create()->each(fn($user) => $user->assignRole($gerenteRole));
         User::factory(50)->create()->each(fn($user) => $user->assignRole($usuarioRole));
     }
 }

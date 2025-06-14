@@ -14,9 +14,14 @@ return new class extends Migration {
             $table->foreignId('unidad_administrativa_id')
                 ->constrained('unidades_administrativas')
                 ->onDelete('restrict');
-            $table->foreignId('user_id')
-                ->unique() // DUDA: ¿Debería ser único? ¿O debería permitir que un usuario administre varias gerencias?
+            $table->foreignId('gerente_id')
                 ->nullable()
+                ->unique()
+                ->constrained('users')
+                ->onDelete('set null');
+            $table->foreignId('subgerente_id')
+                ->nullable()
+                ->unique()
                 ->constrained('users')
                 ->onDelete('set null');
             $table->softDeletes();

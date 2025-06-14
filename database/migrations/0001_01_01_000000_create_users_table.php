@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->string('last_name');
             $table->string('email')->unique();
             $table->string('password');
+            $table->foreignId('pertenece_id')->nullable();
             $table->softDeletes();
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->timestamps();
@@ -28,7 +29,7 @@ return new class extends Migration {
             $table->timestamp('created_at')->nullable();
         });
 
-        // NOTE: De puede implementar sesiones de usuario (monitoreo)
+        // NOTE: Se puede implementar sesiones de usuario (monitoreo)
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
             $table->foreignId('user_id')->nullable()->index();
