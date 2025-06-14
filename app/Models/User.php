@@ -50,7 +50,6 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
     public function actividades(): HasMany
     {
         return $this->hasMany(Actividad::class);
@@ -69,5 +68,10 @@ class User extends Authenticatable
     public function unidadAdministrativa(): BelongsTo
     {
         return $this->belongsTo(UnidadAdministrativa::class);
+    }
+
+    public function getNameAttribute(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
     }
 }

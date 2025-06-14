@@ -4,14 +4,11 @@ namespace App\Filament\Pages;
 
 use App\Models\Gerencia;
 use Filament\Pages\Page;
-use Filament\Forms;
 use Illuminate\Support\Facades\Hash;
 use Filament\Notifications\Notification;
 
-class MiPerfil extends Page implements Forms\Contracts\HasForms
+class MiPerfil extends Page
 {
-    use Forms\Concerns\InteractsWithForms;
-
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationIcon = 'heroicon-o-user';
     protected static ?string $navigationLabel = 'Mi perfil';
@@ -19,40 +16,35 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
     protected static string $view = 'filament.pages.mi-perfil';
     protected static ?string $navigationGroup = 'Usuarios y Accesos';
 
-    public $name;
-    public $email;
-    public $current_password;
-    public $new_password;
-    public $new_password_confirmation;
-    public bool $modoEdicion = false;
+    // Campos visibles/editables
+    public string $first_name, $last_name, $email;
+    public string $password_actual = '', $password_nueva = '', $password_confirmacion = '';
 
-    public $id;
-    public $rol;
-    public $extra;
+    // Estados de edición
+    public bool $editName = false, $editEmail = false, $editPassword = false;
+    public bool $showPassword = false;
+    // Otros datos del perfil
+    public string $rol = '';
     public string $extraLabel = '';
-    public $unidad;
-    public $esGerente;
-
+    public $extra;
 
     public function mount(): void
     {
         $user = auth()->user();
 
-        $this->id = $user->id;
-        $this->name = $user->name;
+        $this->first_name = $user->first_name;
+        $this->last_name = $user->last_name;
         $this->email = $user->email;
         $this->rol = $user->roles->pluck('name')->first();
 
-        if ($user->hasRole('gerente')) {
+        if ($user->hasRole(['gerente', 'subgerente'])) {
             $gerencia = $user->gerenciaQueDirige;
             $this->extraLabel = 'Gerencia dirigida';
             $this->extra = $gerencia?->nombre;
-
-        } elseif ($user->hasRole('usuario')) {
+        } elseif ($user->hasRole(['admin', 'usuario'])) {
             $gerencia = $user->gerencia;
             $this->extraLabel = 'Gerencia adscrita';
             $this->extra = $gerencia?->nombre;
-
         } elseif ($user->hasRole('administrador-unidad')) {
             $this->extraLabel = 'Unidad administrada';
             $this->extra = $user->unidadAdministrativa?->nombre;
@@ -60,85 +52,96 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
             $this->extraLabel = '---';
             $this->extra = null;
         }
-
-        $this->form->fill([
-            'name' => $this->name,
-            'email' => $this->email,
-        ]);
-    }
-    protected function getFormSchema(): array
-    {
-        if (!$this->modoEdicion) {
-            return [];
-        }
-
-        return [
-            Forms\Components\TextInput::make('name')->label('Nombre')->required(),
-            Forms\Components\TextInput::make('email')->label('Correo')->email()->required(),
-
-            Forms\Components\TextInput::make('current_password')
-                ->label('Contraseña actual')
-                ->password()
-                ->revealable()
-                ->requiredWith('new_password'),
-
-            Forms\Components\TextInput::make('new_password')
-                ->label('Nueva contraseña')
-                ->password()
-                ->revealable()
-                ->minLength(8)
-                ->same('new_password_confirmation'),
-
-            Forms\Components\TextInput::make('new_password_confirmation')
-                ->label('Confirmar nueva contraseña')
-                ->password()
-                ->revealable()
-                ->extraAttributes(['onpaste' => 'return false']),
-        ];
     }
 
-    public function submit()
+    public function toggleEdit(string $field): void
     {
-        $data = $this->form->getState();
-        $user = auth()->user();
+        $this->{$field} = !$this->{$field};
 
-        if ($data['new_password']) {
-            if (!Hash::check($data['current_password'], $user->password)) {
-                Notification::make()
-                    ->title('Contraseña actual incorrecta')
-                    ->danger()
-                    ->send();
-                return;
+        if (!$this->{$field}) {
+            $user = auth()->user();
+
+            if ($field === 'editName') {
+                $this->first_name = $user->first_name;
+                $this->last_name = $user->last_name;
             }
 
-            $user->password = bcrypt($data['new_password']);
-            $user->save();
+            if ($field === 'editEmail') {
+                $this->email = auth()->user()->email;
+            }
 
-            Notification::make()
-                ->title('Contraseña actualizada')
-                ->success()
-                ->send();
-
-            return redirect()->route('filament.admin.pages.dashboard');
+            if ($field === 'editPassword') {
+                $this->reset(['password_actual', 'password_nueva', 'password_confirmacion']);
+            }
         }
+    }
 
-        $user->name = $data['name'];
-        $user->email = $data['email'];
-        $user->save();
 
-        $this->modoEdicion = false;
+    public function saveName(): void
+    {
+        $this->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+        ]);
+
+        auth()->user()->update([
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+        ]);
+
+        $this->editName = false;
 
         Notification::make()
-            ->title('Perfil actualizado')
+            ->title('Nombre actualizado correctamente')
             ->success()
             ->send();
     }
 
+    public function saveEmail(): void
+    {
+        $this->validate([
+            'email' => 'required|email|unique:users,email,' . auth()->id(),
+        ]);
+
+        auth()->user()->update([
+            'email' => $this->email,
+        ]);
+
+        $this->editEmail = false;
+
+        Notification::make()
+            ->title('Correo actualizado correctamente')
+            ->success()
+            ->send();
+    }
+
+
+    public function savePassword(): void
+    {
+        $this->validate([
+            'password_actual' => 'required|current_password',
+            'password_nueva' => 'required|min:8|same:password_confirmacion',
+        ], $this->messages());
+
+        auth()->user()->update([
+            'password' => bcrypt($this->password_nueva),
+        ]);
+
+        $this->editPassword = false;
+        $this->reset(['password_actual', 'password_nueva', 'password_confirmacion']);
+
+        Notification::make()
+            ->title('Contraseña actualizada')
+            ->success()
+            ->send();
+    }
+
+
     protected function messages(): array
     {
         return [
-            'new_password.same' => 'La nueva contraseña y su confirmación no coinciden.',
-            'new_password.min' => 'La nueva contraseña debe tener al menos :min caracteres.',
+            'password_nueva.same' => 'La nueva contraseña y su confirmación no coinciden.',
+            'password_nueva.min' => 'La nueva contraseña debe tener al menos :min caracteres.',
             'email.email' => 'El correo electrónico no es válido.',
         ];
     }
