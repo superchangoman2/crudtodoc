@@ -55,7 +55,7 @@ class ActividadesSeeder extends Seeder
                 'descripcion' => 'Discusión de resultados con el equipo técnico.',
                 'tipo_actividad_id' => 2,
                 'gerencia_id' => 2,
-                'user_id' => 15,
+                'user_id' => 4,
                 'fecha' => '2025-06-02',
             ],
             [

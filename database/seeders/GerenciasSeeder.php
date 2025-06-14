@@ -66,16 +66,14 @@ class GerenciasSeeder extends Seeder
         ];
 
         foreach ($asignaciones as $unidadNombre => $gerencias) {
-            $unidad = UnidadAdministrativa::firstOrCreate(['nombre' => $unidadNombre]);
+            $unidad = UnidadAdministrativa::firstOrCreate(['nombre' => $unidadNombre]);//Aqui se crea o actualiza la unidad administrativa
 
             foreach ($gerencias as $nombreGerencia) {
-                Gerencia::firstOrCreate(
+                Gerencia::firstOrCreate( // Aquí se crea o actualiza la gerencia
                     ['nombre' => $nombreGerencia],
                     ['unidad_administrativa_id' => $unidad->id]
                 );
             }
         }
-
-        $this->command->info('✔️ Unidades administrativas y gerencias creadas y vinculadas correctamente.');
     }
 }

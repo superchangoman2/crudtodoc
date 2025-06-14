@@ -20,28 +20,33 @@ class TestUsersSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
-                'name' => 'Administrador',
+                'first_name' => 'admin',
+                'last_name' => 'super',
                 'password' => bcrypt('admin123'),
             ]
         );
+
         $unidad = User::firstOrCreate(
             ['email' => 'unidad@example.com'],
             [
-                'name' => 'Administrador de Unidad',
+                'first_name' => 'administrador',
+                'last_name' => 'unidad',
                 'password' => bcrypt('unidad123'),
             ]
         );
         $gerente = User::firstOrCreate(
             ['email' => 'gerente@example.com'],
             [
-                'name' => 'Gerente General',
+                'first_name' => 'gerente',
+                'last_name' => 'operativo',
                 'password' => bcrypt('gerente123'),
             ]
         );
         $user = User::firstOrCreate(
             ['email' => 'usuario@example.com'],
             [
-                'name' => 'Usuario Normal',
+                'first_name' => 'usuario',
+                'last_name' => 'normal',
                 'password' => bcrypt('usuario123'),
             ]
         );
@@ -53,9 +58,9 @@ class TestUsersSeeder extends Seeder
         $user->assignRole($usuarioRole);
 
         // Crear usuarios de prueba y asignar roles
-        User::factory(2)->create()->each(fn($user) => $user->assignRole($adminRole));
-        User::factory(4)->create()->each(fn($user) => $user->assignRole($unidadRole));
-        User::factory(4)->create()->each(fn($user) => $user->assignRole($gerenteRole));
-        User::factory(10)->create()->each(fn($user) => $user->assignRole($usuarioRole));
+        User::factory(5)->create()->each(fn($user) => $user->assignRole($adminRole));
+        User::factory(10)->create()->each(fn($user) => $user->assignRole($unidadRole));
+        User::factory(35)->create()->each(fn($user) => $user->assignRole($gerenteRole));
+        User::factory(50)->create()->each(fn($user) => $user->assignRole($usuarioRole));
     }
 }
