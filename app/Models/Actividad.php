@@ -32,6 +32,18 @@ class Actividad extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function gerencia(): BelongsTo
+    {
+        return $this->belongsTo(Gerencia::class, 'pertenece_id');
+    }
+
+    public function getGerenciaAsignadaAttribute(): ?Gerencia
+    {
+        return $this->hasAnyRole(['admin', 'gerente', 'subgerente', 'usuario'])
+            ? $this->gerencia
+            : null;
+    }
+
     public function tipoActividad(): BelongsTo
     {
         return $this->belongsTo(TipoActividad::class);
