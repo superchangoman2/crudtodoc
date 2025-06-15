@@ -18,7 +18,6 @@ return new class extends Migration {
                     g.nombre,
                     g.unidad_administrativa_id,
 
-                    -- Gerente: usuario con pertenece_id = g.id y rol = "gerente"
                     (
                         SELECT u.id
                         FROM users u
@@ -28,7 +27,6 @@ return new class extends Migration {
                         LIMIT 1
                     ) AS gerente_id,
 
-                    -- Subgerente: usuario con pertenece_id = g.id y rol = "subgerente"
                     (
                         SELECT u.id
                         FROM users u
@@ -46,7 +44,7 @@ return new class extends Migration {
                 SELECT
                     ua.id,
                     ua.nombre,
-
+                    
                     (
                         SELECT u.id
                         FROM users u
