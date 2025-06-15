@@ -6,6 +6,11 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up(): void
     {
+        // down() no funciona con vistas, entonces eliminamos la vista en up()
+        DB::unprepared('DROP VIEW IF EXISTS vista_gerencias_con_responsables');
+        DB::unprepared('DROP VIEW IF EXISTS vista_unidades_con_administrador');
+
+        // y luego las creamos
         DB::unprepared('
             CREATE VIEW vista_gerencias_con_responsables AS
                 SELECT
@@ -57,7 +62,5 @@ return new class extends Migration {
 
     public function down(): void
     {
-        DB::unprepared('DROP VIEW IF EXISTS vista_gerencias_con_responsables');
-        DB::unprepared('DROP VIEW IF EXISTS vista_unidades_con_administrador');
     }
 };
