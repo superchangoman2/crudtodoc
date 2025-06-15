@@ -57,21 +57,40 @@ class User extends Authenticatable
 
     public function gerencia(): BelongsTo
     {
-        return $this->belongsTo(Gerencia::class);
-    }
-
-    public function gerenciaQueDirige(): HasOne
-    {
-        return $this->hasOne(Gerencia::class, 'user_id');
+        return $this->belongsTo(Gerencia::class, 'pertenece_id');
     }
 
     public function unidadAdministrativa(): BelongsTo
     {
-        return $this->belongsTo(UnidadAdministrativa::class);
+        return $this->belongsTo(UnidadAdministrativa::class, 'pertenece_id');
     }
+
 
     public function getNameAttribute(): string
     {
         return "{$this->first_name} {$this->last_name}";
     }
+
+    public function getPertenenciaInfo(): array
+    {
+        if ($this->hasRole('administrador-unidad')) {
+            return [
+                'tipo' => Actividad::TIPO_UNIDAD,
+                'nombre' => $this->unidadAdministrativa?->nombre ?? 'Sin asignar',
+            ];
+        }
+
+        if ($this->hasAnyRole(['admin', 'gerente', 'subgerente', 'usuario'])) {
+            return [
+                'tipo' => Actividad::TIPO_GERENCIA,
+                'nombre' => $this->gerencia?->nombre ?? 'Sin asignar',
+            ];
+        }
+
+        return [
+            'tipo' => Actividad::TIPO_OTRO,
+            'nombre' => 'Sin asignar',
+        ];
+    }
+
 }

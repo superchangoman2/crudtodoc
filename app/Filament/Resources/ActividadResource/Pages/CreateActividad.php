@@ -2,9 +2,8 @@
 
 namespace App\Filament\Resources\ActividadResource\Pages;
 
+use App\Models\Actividad;
 use App\Filament\Resources\ActividadResource;
-use Filament\Actions;
-use App\Models\Gerencia;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateActividad extends CreateRecord
@@ -14,19 +13,25 @@ class CreateActividad extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $user = auth()->user();
+
         $data['user_id'] = $user->id;
 
-        // Determinar gerencia_id:
-        if ($user->gerencia_id) {
-            $data['gerencia_id'] = $user->gerencia_id;
-        } elseif ($user->hasRole('gerente')) {
-            $data['gerencia_id'] = Gerencia::where('user_id', $user->id)->value('id');
+        if ($user->hasRole('administrador-unidad')) {
+            $unidad = $user->unidadAdministrativa;
+            $data['pertenencia_nombre'] = $unidad?->nombre;
+            $data['pertenencia_tipo'] = Actividad::TIPO_UNIDAD;
+        } elseif ($user->hasAnyRole(['admin', 'gerente', 'subgerente', 'usuario'])) {
+            $gerencia = $user->gerenciaQueDirige ?? $user->gerencia ?? null;
+            $data['pertenencia_nombre'] = $gerencia?->nombre;
+            $data['pertenencia_tipo'] = Actividad::TIPO_GERENCIA;
         } else {
-            $data['gerencia_id'] = null; // o puedes abortar si es obligatorio
+            $data['pertenencia_nombre'] = 'Sin asignar';
+            $data['pertenencia_tipo'] = Actividad::TIPO_OTRO;
         }
 
         return $data;
     }
+
     protected function getRedirectUrl(): string
     {
         return static::getResource()::getUrl('index');

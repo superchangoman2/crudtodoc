@@ -3,32 +3,27 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ActividadResource\Pages;
-use App\Filament\Resources\ActividadResource\RelationManagers;
 use App\Models\Actividad;
 use App\Models\Gerencia;
-use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Textarea;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\Select;
-use Filament\Tables;
-use Filament\Tables\Table;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ForceDeleteAction;
+use Filament\Tables\Actions\ForceDeleteBulkAction;
+use Filament\Tables\Actions\RestoreAction;
+use Filament\Tables\Actions\RestoreBulkAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\RestoreAction;
-use Filament\Tables\Actions\ForceDeleteAction;
-use Filament\Tables\Actions\RestoreBulkAction;
-use Filament\Tables\Actions\ForceDeleteBulkAction;
-
-
 
 class ActividadResource extends Resource
 {
@@ -42,13 +37,44 @@ class ActividadResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
+        $user = auth()->user();
 
-        if (auth()->user()?->hasRole('admin')) {
-            $query->withoutGlobalScope(SoftDeletingScope::class);
+        if ($user->hasRole('admin')) {
+            return $query->withoutGlobalScope(SoftDeletingScope::class);
         }
 
-        return $query;
+        if ($user->hasRole('administrador-unidad')) {
+            $unidadNombre = $user->unidadAdministrativa?->nombre;
+
+            $gerencias = Gerencia::where('unidad_administrativa_id', $user->pertenece_id)
+                ->pluck('nombre')
+                ->toArray();
+
+            return $query->where(function ($q) use ($unidadNombre, $gerencias) {
+                $q->where(function ($sub) use ($unidadNombre) {
+                    $sub->where('pertenencia_tipo', Actividad::TIPO_UNIDAD)
+                        ->where('pertenencia_nombre', $unidadNombre);
+                })->orWhere(function ($sub) use ($gerencias) {
+                    $sub->where('pertenencia_tipo', Actividad::TIPO_GERENCIA)
+                        ->whereIn('pertenencia_nombre', $gerencias);
+                });
+            });
+        }
+
+        if ($user->hasAnyRole(['gerente', 'subgerente'])) {
+            $gerenciaNombre = $user->gerencia?->nombre;
+
+            return $query->where('pertenencia_tipo', Actividad::TIPO_GERENCIA)
+                ->where('pertenencia_nombre', $gerenciaNombre);
+        }
+
+        if ($user->hasRole('usuario')) {
+            return $query->where('user_id', $user->id);
+        }
+        return $query->whereRaw('1 = 0');
     }
+
+
 
     public static function form(Form $form): Form
     {
@@ -72,24 +98,27 @@ class ActividadResource extends Resource
                     ->preload()
                     ->required(),
 
-                Select::make('gerencia_id')
-                    ->label('Gerencia')
-                    ->relationship('gerencia', 'nombre')
-                    ->searchable()
-                    ->required()
-                    ->default(function () {
-                        $user = auth()->user();
-                        if ($user->hasRole('gerente')) {
-                            return Gerencia::where('user_id', $user->id)->value('id') ?? 'NAN';
-                        } elseif ($user->gerencia_id) {
-                            return $user->gerencia_id;
-                        }
-                        return 'NAN';
-                    })
-                    ->disabled(function () {
-                        $user = auth()->user();
-                        return !$user->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
-                    }),
+                TextInput::make('pertenencia_tipo')
+                    ->label('Tipo de pertenencia')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->default(
+                        fn($state, $record, $component) =>
+                        $component->getLivewire() instanceof \Filament\Resources\Pages\CreateRecord
+                        ? auth()->user()->getPertenenciaInfo()['tipo']
+                        : null
+                    ),
+
+                TextInput::make('pertenencia_nombre')
+                    ->label('Pertenencia')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->default(
+                        fn($state, $record, $component) =>
+                        $component->getLivewire() instanceof \Filament\Resources\Pages\CreateRecord
+                        ? auth()->user()->getPertenenciaInfo()['nombre']
+                        : null
+                    ),
 
                 DatePicker::make('fecha')
                     ->label('Fecha')
@@ -102,27 +131,42 @@ class ActividadResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('user.name') // <- accede al nombre del usuario
-                    ->label('Usuario')
-                    ->sortable()
+                TextColumn::make('user.first_name')
+                    ->label('Nombres')
                     ->searchable()
-                    ->visible(fn() => auth()->user()?->hasRole(['admin', 'administrador-unidad', 'gerente']))
-                    ->formatStateUsing(function ($state, $record) {
-                        return "{$record->user_id} - {$state}";
-                    }),
-                TextColumn::make('gerencia.nombre') // <- accede al nombre del usuario
-                    ->label('Gerencia')
                     ->sortable()
+                    ->visible(fn() => auth()->user()?->hasRole(['admin', 'administrador-unidad', 'gerente'])),
+
+                TextColumn::make('user.last_name')
+                    ->label('Apellidos')
                     ->searchable()
-                    ->visible(fn() => auth()->user()?->hasRole(['admin', 'administrador-unidad'])),
-                TextColumn::make('tipoActividad.nombre')
-                    ->label('Tipo de Actividad')
                     ->sortable()
-                    ->searchable(),
+                    ->visible(fn() => auth()->user()?->hasRole(['admin', 'administrador-unidad', 'gerente'])),
+
                 TextColumn::make('titulo')
                     ->label('Título')
                     ->sortable()
                     ->searchable(),
+
+                TextColumn::make('pertenencia_tipo')
+                    ->label('Tipo')
+                    ->sortable()
+                    ->searchable()
+                    ->visible(fn() => auth()->user()?->hasAnyRole(['admin', 'administrador-unidad', 'gerente'])),
+                // Nota: se puede usar ->badge() para hacer cosas más bonitas y ->color()
+
+                TextColumn::make('pertenencia_nombre')
+                    ->label('Pertenencia')
+                    ->sortable()
+                    ->searchable()
+                    ->visible(fn() => auth()->user()?->hasAnyRole(['admin', 'administrador-unidad', 'gerente']))
+                    ->formatStateUsing(fn($state) => $state ?? 'Sin asignar'),
+
+                TextColumn::make('tipoActividad.nombre')
+                    ->label('Tipo de Actividad')
+                    ->sortable()
+                    ->searchable(),
+
                 TextColumn::make('fecha')
                     ->label('fecha')
                     ->sortable()
