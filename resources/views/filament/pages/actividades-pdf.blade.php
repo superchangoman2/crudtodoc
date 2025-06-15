@@ -75,12 +75,14 @@
         <img class="backimg" src="{{ public_path('images/pie-web.png') }}">
     </div>
 
-    <h2 class="header-text">Reporte de actividades Quincenal</h2>
-    <p class="header-text">16 al 30 de abril del 2025</p>
+    <h2 class="header-text">{{ $titulo }}</h2>
+    @if ($rangoFechas)
+        <p class="header-text">{{ $rangoFechas }}</p>
+    @endif
     <table>
         <thead>
             <tr>
-                <th>Gerencia</th>
+                <th>{{ $actividades->first()->pertenencia_tipo }}</th>
                 <th>Tipo de actividad</th>
                 <th>Descripción de la actividad</th>
             </tr>
