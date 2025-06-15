@@ -62,49 +62,30 @@ class TestUsersSeeder extends Seeder
 
         // Asignar roles a los usuarios creados
         $admin->assignRole($adminRole);
-        $admin->rol_cache = 'admin';
-        $admin->save();
-
         $unidad->assignRole($unidadRole);
-        $unidad->rol_cache = 'administrador-unidad';
-        $unidad->save();
-
         $gerente->assignRole($gerenteRole);
-        $gerente->rol_cache = 'gerente';
-        $gerente->save();
-
         $subgerente->assignRole($subgerenteRole);
-        $subgerente->rol_cache = 'subgerente';
-        $subgerente->save();
-
         $user->assignRole($usuarioRole);
-        $user->rol_cache = 'usuario';
-        $user->save();
 
         // Crear usuarios de prueba y asignar roles
         User::factory(5)->create()->each(function ($user) use ($adminRole) {
             $user->assignRole($adminRole);
-            $user->update(['rol_cache' => 'admin']);
         });
 
         User::factory(10)->create()->each(function ($user) use ($unidadRole) {
             $user->assignRole($unidadRole);
-            $user->update(['rol_cache' => 'administrador-unidad']);
         });
 
         User::factory(20)->create()->each(function ($user) use ($subgerenteRole) {
             $user->assignRole($subgerenteRole);
-            $user->update(['rol_cache' => 'subgerente']);
         });
 
         User::factory(35)->create()->each(function ($user) use ($gerenteRole) {
             $user->assignRole($gerenteRole);
-            $user->update(['rol_cache' => 'gerente']);
         });
 
         User::factory(50)->create()->each(function ($user) use ($usuarioRole) {
             $user->assignRole($usuarioRole);
-            $user->update(['rol_cache' => 'usuario']);
         });
 
     }

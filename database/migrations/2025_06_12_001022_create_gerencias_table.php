@@ -14,16 +14,6 @@ return new class extends Migration {
             $table->foreignId('unidad_administrativa_id')
                 ->constrained('unidades_administrativas')
                 ->onDelete('restrict');
-            $table->foreignId('gerente_id')
-                ->nullable()
-                ->unique()
-                ->constrained('users')
-                ->onDelete('set null');
-            $table->foreignId('subgerente_id')
-                ->nullable()
-                ->unique()
-                ->constrained('users')
-                ->onDelete('set null');
             $table->softDeletes();
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->timestamps();

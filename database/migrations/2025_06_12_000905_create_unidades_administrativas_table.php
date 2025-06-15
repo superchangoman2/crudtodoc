@@ -10,11 +10,6 @@ return new class extends Migration {
         Schema::create('unidades_administrativas', function (Blueprint $table) {
             $table->id();
             $table->string('nombre')->unique();
-            $table->foreignId('administrador_id')
-                ->unique()
-                ->nullable()
-                ->constrained('users')
-                ->onDelete('set null');
             $table->softDeletes();
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->timestamps();
