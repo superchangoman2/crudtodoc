@@ -22,13 +22,14 @@
         td {
             border: 1px solid black;
             padding: 6px;
-            vertical-align: top;
+            vertical-align: middle;
+            text-align: center;
         }
 
         th {
             background-color: #f0f0f0;
             font-weight: bold;
-            text-align: left;
+            font-size: 14px;
         }
 
         .header,
@@ -57,17 +58,21 @@
             font-weight: bold;
             margin: 0;
         }
+
+        .backimg {
+            opacity: 0.5;
+        }
     </style>
 </head>
 
 <body>
 
     <div class="header">
-        <img src="{{ public_path('images/encabezado-web.png') }}">
+        <img class="backimg" src="{{ public_path('images/encabezado-web.png') }}">
     </div>
 
     <div class="footer">
-        <img src="{{ public_path('images/pie-web.png') }}">
+        <img class="backimg" src="{{ public_path('images/pie-web.png') }}">
     </div>
 
     <h2 class="header-text">Reporte de actividades Quincenal</h2>
