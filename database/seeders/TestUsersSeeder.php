@@ -24,7 +24,7 @@ class TestUsersSeeder extends Seeder
                 'first_name' => 'admin',
                 'last_name' => 'super',
                 'password' => bcrypt('admin123'),
-                'pertenece_id' => 1,
+                'pertenece_id' => 6,
             ]
         );
 
@@ -34,7 +34,7 @@ class TestUsersSeeder extends Seeder
                 'first_name' => 'administrador',
                 'last_name' => 'unidad',
                 'password' => bcrypt('unidad123'),
-                'pertenece_id' => 1,
+                'pertenece_id' => 6,
             ]
         );
         $gerente = User::firstOrCreate(
@@ -43,7 +43,7 @@ class TestUsersSeeder extends Seeder
                 'first_name' => 'gerente',
                 'last_name' => 'operativo',
                 'password' => bcrypt('gerente123'),
-                'pertenece_id' => 1,
+                'pertenece_id' => 26,
             ]
         );
         $subgerente = User::firstOrCreate(
@@ -52,7 +52,7 @@ class TestUsersSeeder extends Seeder
                 'first_name' => 'subgerente',
                 'last_name' => 'trabajador',
                 'password' => bcrypt('subgerente123'),
-                'pertenece_id' => 1,
+                'pertenece_id' => 26,
             ]
         );
         $user = User::firstOrCreate(
@@ -61,7 +61,7 @@ class TestUsersSeeder extends Seeder
                 'first_name' => 'usuario',
                 'last_name' => 'normal',
                 'password' => bcrypt('usuario123'),
-                'pertenece_id' => 1,
+                'pertenece_id' => 26,
             ]
         );
 
@@ -82,7 +82,7 @@ class TestUsersSeeder extends Seeder
         });
 
 
-        $unidadIds = collect(range(2, 9))->shuffle()->take(8)->values();
+        $unidadIds = collect(range(1, 9))->reject(fn($id) => $id === 6)->shuffle()->take(8)->values();
         User::factory(10)->create()->shuffle()->values()->each(function ($u, $i) use ($unidadRole, $unidadIds) {
             $u->assignRole($unidadRole);
             if ($i < count($unidadIds)) {
@@ -92,31 +92,31 @@ class TestUsersSeeder extends Seeder
         });
 
 
-        $gerenciaIdsG = collect(range(2, 34))->shuffle()->take(32)->values();
+        $gerenteIds = collect(range(1, 34))->reject(fn($id) => $id === 26)->shuffle()->take(32)->values();
         $omitG = collect(range(0, 34))->shuffle()->take(2)->toArray();
 
-        User::factory(35)->create()->shuffle()->values()->each(function ($u, $i) use ($gerenteRole, $gerenciaIdsG, $omitG) {
+        User::factory(35)->create()->shuffle()->values()->each(function ($u, $i) use ($gerenteRole, $gerenteIds, $omitG) {
             $u->assignRole($gerenteRole);
             if (!in_array($i, $omitG)) {
-                $u->pertenece_id = $gerenciaIdsG->get($i);
+                $u->pertenece_id = $gerenteIds->get($i);
             }
             $u->save();
         });
 
-        $gerenciaIdsSG = collect(range(2, 34))->shuffle()->slice(0, 32)->values();
-        User::factory(20)->create()->shuffle()->values()->each(function ($u, $i) use ($subgerenteRole, $gerenciaIdsSG) {
+        $subgerenteIds = collect(range(1, 34))->reject(fn($id) => $id === 26)->shuffle()->slice(0, 32)->values();
+        User::factory(20)->create()->shuffle()->values()->each(function ($u, $i) use ($subgerenteRole, $subgerenteIds) {
             $u->assignRole($subgerenteRole);
-            if ($i < count($gerenciaIdsSG)) {
-                $u->pertenece_id = $gerenciaIdsSG[$i];
+            if ($i < count($subgerenteIds)) {
+                $u->pertenece_id = $subgerenteIds[$i];
                 $u->save();
             }
         });
 
-        $gerenciaIdsU = collect(range(1, 34))->shuffle()->take(45)->values();
-        User::factory(50)->create()->shuffle()->values()->each(function ($u, $i) use ($usuarioRole, $gerenciaIdsU) {
+        $usuarioIds = collect(range(1, 34))->shuffle()->take(45)->values();
+        User::factory(50)->create()->shuffle()->values()->each(function ($u, $i) use ($usuarioRole, $usuarioIds) {
             $u->assignRole($usuarioRole);
-            if ($i < count($gerenciaIdsU)) {
-                $u->pertenece_id = $gerenciaIdsU[$i];
+            if ($i < count($usuarioIds)) {
+                $u->pertenece_id = $usuarioIds[$i];
                 $u->save();
             }
         });

@@ -27,6 +27,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Enums\ActionsPosition;
 
+
 class ActividadResource extends Resource
 {
     protected static ?int $navigationSort = 4;
