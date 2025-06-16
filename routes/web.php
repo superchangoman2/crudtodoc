@@ -8,4 +8,5 @@ use App\Http\Controllers\ActividadExportController;
 // });
 
 Route::redirect('/', '/admin');
-Route::get('/actividades/exportar', [ActividadExportController::class, 'exportarPdf']);
+Route::get('/actividades/exportar-pdf', [ActividadExportController::class, 'exportarPdf'])
+    ->name('actividades.exportar-pdf');

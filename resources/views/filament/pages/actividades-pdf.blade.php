@@ -96,6 +96,7 @@
                         <strong>{{ $actividad->titulo }}</strong><br>
                         {{ $actividad->descripcion }}
                     </td>
+                    {{ $actividad->fecha }}
                 </tr>
             @endforeach
         </tbody>

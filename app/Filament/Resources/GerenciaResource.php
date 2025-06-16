@@ -20,6 +20,7 @@ use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Enums\ActionsPosition;
 class GerenciaResource extends Resource
 {
     protected static ?string $model = Gerencia::class;
@@ -117,7 +118,7 @@ class GerenciaResource extends Resource
             ->actions([
                 EditAction::make(),
                 DeleteAction::make(),
-            ])
+            ], position: ActionsPosition::BeforeColumns)
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),

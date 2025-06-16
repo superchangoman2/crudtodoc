@@ -11,6 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\DeleteBulkAction;
@@ -24,6 +25,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Enums\ActionsPosition;
 
 class ActividadResource extends Resource
 {
@@ -214,6 +216,15 @@ class ActividadResource extends Resource
 
                 ForceDeleteAction::make()
                     ->visible(fn($record) => auth()->user()?->hasRole('admin') && $record->trashed()),
+            ], position: ActionsPosition::BeforeColumns)
+            ->headerActions([
+                Action::make('exportar')
+                    ->label('Exportar PDF')
+                    ->color('primary')
+                    ->icon('heroicon-o-printer')
+                    ->action(function () {
+                        return redirect()->route('actividades.exportar-pdf');
+                    }),
             ])
             ->bulkActions([
                 BulkActionGroup::make([

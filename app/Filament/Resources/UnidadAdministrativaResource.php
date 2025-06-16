@@ -15,6 +15,7 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Table;
 
 class UnidadAdministrativaResource extends Resource
@@ -92,7 +93,7 @@ class UnidadAdministrativaResource extends Resource
             ->actions([
                 EditAction::make(),
                 DeleteAction::make(),
-            ])
+            ], position: ActionsPosition::BeforeColumns)
             ->bulkActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
