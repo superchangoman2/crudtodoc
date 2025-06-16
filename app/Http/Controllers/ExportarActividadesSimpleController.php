@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Models\Gerencia;
 use Illuminate\Support\Carbon;
 
-class ActividadExportController extends Controller
+class ExportarActividadesSimpleController extends Controller
 {
     public function exportarPdf()
     {

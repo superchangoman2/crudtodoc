@@ -82,7 +82,7 @@
     <table>
         <thead>
             <tr>
-                <th>{{ $actividades->first()->pertenencia_tipo }}</th>
+                <th>{{ optional($actividades->first())->pertenencia_tipo ?? 'Pertenencia' }}</th>
                 <th>Tipo de actividad</th>
                 <th>Descripción de la actividad</th>
             </tr>

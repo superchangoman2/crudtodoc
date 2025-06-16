@@ -336,20 +336,21 @@ class ExportarActividades extends Page implements HasForms
         ];
     }
 
-    public function formActions(): array
+    public function getActions(): array
     {
         return [
             Action::make('exportar')
                 ->label('Generar PDF')
                 ->color('primary')
-                ->action('exportar')
-                ->icon('heroicon-o-printer'),
+                ->icon('heroicon-o-printer')
+                ->action('exportar'),
         ];
     }
-
     public function exportar()
     {
         $params = http_build_query(array_filter($this->formData));
         return redirect()->to('/exportar-pdf?' . $params);
     }
 }
+
+
