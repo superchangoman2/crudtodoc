@@ -15,10 +15,12 @@ class ExportarActividades extends Page implements HasForms
 {
     use InteractsWithForms;
 
+    protected static ?int $navigationSort = 2;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static string $view = 'filament.pages.exportar-actividades';
     protected static ?string $navigationLabel = 'Exportar Actividades';
     protected static ?string $title = 'Exportar Reporte de Actividades';
+    protected static ?string $navigationGroup = 'Registros';
 
     public array $formData = [];
 

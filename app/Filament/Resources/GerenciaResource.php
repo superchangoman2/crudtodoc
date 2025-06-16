@@ -25,7 +25,7 @@ class GerenciaResource extends Resource
 {
     protected static ?string $model = Gerencia::class;
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 3;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationLabel = 'Gerencias';
     protected static ?string $pluralModelLabel = 'Gerencias';

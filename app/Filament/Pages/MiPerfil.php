@@ -12,11 +12,12 @@ use Filament\Notifications\Notification;
 class MiPerfil extends Page implements Forms\Contracts\HasForms
 {
     use Forms\Concerns\InteractsWithForms;
-
+    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationGroup = 'Usuarios y Accesos';
     protected static ?string $navigationIcon = 'heroicon-o-user';
     protected static ?string $navigationLabel = 'Mi perfil';
-    protected static ?string $title = 'Mi perfil';
     protected static string $view = 'filament.pages.mi-perfil';
+    protected static ?string $title = 'Mi perfil';
 
     public string $first_name, $last_name;
     public string $email;
@@ -109,7 +110,7 @@ class MiPerfil extends Page implements Forms\Contracts\HasForms
         if (!empty($data['new_password'])) {
             if (!Hash::check($data['current_password'], $user->password)) {
                 Notification::make()
-                    ->title('Contraseña actual incorrecta')
+                    ->title('Coatraseña actual incorrecta')
                     ->danger()
                     ->send();
                 return;

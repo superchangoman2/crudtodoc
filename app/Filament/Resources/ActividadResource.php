@@ -30,10 +30,10 @@ use Filament\Tables\Enums\ActionsPosition;
 
 class ActividadResource extends Resource
 {
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
     protected static ?string $model = Actividad::class;
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
-    protected static ?string $navigationLabel = 'Actividades';
+    protected static ?string $navigationLabel = 'Crear Actividades';
     protected static ?string $pluralModelLabel = 'Actividades';
     protected static ?string $navigationGroup = 'Registros';
 

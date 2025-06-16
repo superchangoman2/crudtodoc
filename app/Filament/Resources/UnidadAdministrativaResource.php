@@ -22,7 +22,7 @@ class UnidadAdministrativaResource extends Resource
 {
     protected static ?string $model = UnidadAdministrativa::class;
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 2;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationLabel = 'Unidades Administrativas';
     protected static ?string $pluralModelLabel = 'Unidades Administrativas';

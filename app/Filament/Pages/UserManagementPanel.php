@@ -17,11 +17,12 @@ class UserManagementPanel extends Page implements HasTable
 {
     use Tables\Concerns\InteractsWithTable;
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
     protected static ?string $navigationIcon = 'heroicon-o-lock-closed';
     protected static ?string $navigationGroup = 'Usuarios y Accesos';
+    protected static ?string $navigationLabel = 'Estructura organizativa';
     protected static string $view = 'filament.pages.user-management-panel';
-    protected static ?string $title = 'Gestión de usuarios';
+    protected static ?string $title = 'Estructura organizativa';
 
     public function getTableQuery(): Builder
     {
@@ -169,17 +170,22 @@ class UserManagementPanel extends Page implements HasTable
 
                 ->icon('heroicon-o-pencil-square')
                 ->extraAttributes(['class' => 'justify-start w-full'])
-                ->visible(fn(User $record) => in_array($record->roles->pluck('name')->first(), ['administrador-unidad', 'gerente', 'usuario'])),
+                ->visible(fn(User $record) => in_array($record->roles->pluck('name')->first(), ['administrador-unidad', 'gerente', 'subgerente', 'usuario'])),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->hasAnyRole(['admin', 'administrador-unidad', 'gerente', 'subgerente']);
     }
 
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
+        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente', 'subgerente']);
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
+        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente', 'subgerente']);
     }
 }
