@@ -21,6 +21,7 @@ class ExportarActividadesController extends Controller
         // Construir query base
         $query = Actividad::query();
 
+
         // Filtros clave
         if (!empty($data['usuario'])) {
             $query->whereIn('user_id', is_array($data['usuario']) ? $data['usuario'] : [$data['usuario']]);
@@ -40,15 +41,33 @@ class ExportarActividadesController extends Controller
             $inicio = "{$data['year']}-{$data['mes_seleccionado']}-01";
             $fin = date("Y-m-t", strtotime($inicio));
             $query->whereBetween('fecha', [$inicio, $fin]);
+        } elseif ($data['modo_fecha'] === 'anual') {
+            $inicio = "{$data['year']}-01-01";
+            $fin = "{$data['year']}-12-31";
+            $query->whereBetween('fecha', [$inicio, $fin]);
         } elseif ($data['modo_fecha'] === 'personalizado') {
             $query->whereBetween('fecha', [$data['fecha_inicio'], $data['fecha_fin']]);
         }
 
         // Obtener actividades
         $actividades = $query->with('user')->get();
+        $usuarios = $actividades->pluck('user')->unique('id');
+        $autorUnico = $usuarios->count() === 1 ? $usuarios->first()->name : null;
 
         // Construir título
+        $tituloModo = match ($data['modo_fecha']) {
+            'anual' => 'Anual',
+            'quincena' => 'Quincenal',
+            'mes' => 'Mensual',
+            'personalizado' => 'Personalizado',
+            default => null,
+        };
+
         $titulo = 'Reporte de actividades';
+        if ($tituloModo) {
+            $titulo .= " $tituloModo";
+        }
+
         if (!empty($data['unidad_administrativa'])) {
             $unidad = UnidadAdministrativa::find($data['unidad_administrativa']);
             $titulo .= ' - ' . $unidad?->nombre;
@@ -67,13 +86,18 @@ class ExportarActividadesController extends Controller
         }
 
         $rangoFechas = match ($data['modo_fecha']) {
+            'anual' => $data['year'],
             'quincena' => "$quincenaTexto $mesNombre {$data['year']}",
             'mes' => Carbon::createFromDate($data['year'], $data['mes_seleccionado'], 1)->translatedFormat('F \d\e Y'),
-            'personalizado' => 'Del ' . $data['fecha_inicio'] . ' al ' . $data['fecha_fin'],
+            'personalizado' => 'Del ' . Carbon::parse($data['fecha_inicio'])->translatedFormat('j \d\e F \d\e Y') .
+            ' al ' . Carbon::parse($data['fecha_fin'])->translatedFormat('j \d\e F \d\e Y'),
             default => null,
         };
 
-        $pdf = Pdf::loadView('filament.pages.actividades-pdf', compact('actividades', 'titulo', 'rangoFechas'));
-        return $pdf->stream('reporte-actividades.pdf');
+        $pdf = Pdf::loadView('filament.pages.actividades-pdf', compact('actividades', 'titulo', 'rangoFechas', 'autorUnico'))
+            ->setPaper('letter', 'landscape')
+            ->stream('reporte-actividades.pdf');
+
+        return $pdf;
     }
 }

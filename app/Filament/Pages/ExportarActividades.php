@@ -259,7 +259,7 @@ class ExportarActividades extends Page implements HasForms
                             'quincena' => 'Quincenal',
                             'mes' => 'Mensual',
                             'personalizado' => 'Personalizado',
-                            'todo' => 'Todo',
+                            'anual' => 'Anual',
                         ])
                         ->default('quincena')
                         ->live(),
@@ -268,7 +268,8 @@ class ExportarActividades extends Page implements HasForms
                         ->label('Año')
                         ->numeric()
                         ->minValue(2000)
-                        ->maxValue(now()->year),
+                        ->maxValue(now()->year)
+                        ->visible(fn($get) => in_array($get('modo_fecha'), ['quincena', 'mes', 'anual'])),
 
                     Select::make('quincena_seleccionada')
                         ->label('Selecciona una quincena')

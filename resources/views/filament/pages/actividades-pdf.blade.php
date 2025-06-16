@@ -75,28 +75,37 @@
         <img class="backimg" src="{{ public_path('images/pie-web.png') }}">
     </div>
 
-    <h2 class="header-text">{{ $titulo }}</h2>
+    <h2 class="header-text">
+        {{ $titulo }}@if ($autorUnico) de {{ $autorUnico }}@endif
+    </h2>
     @if ($rangoFechas)
         <p class="header-text">{{ $rangoFechas }}</p>
     @endif
     <table>
         <thead>
             <tr>
+                @if (!$autorUnico)
+                    <th>Usuario</th>
+                @endif
                 <th>{{ optional($actividades->first())->pertenencia_tipo ?? 'Pertenencia' }}</th>
                 <th>Tipo de actividad</th>
-                <th>Descripción de la actividad</th>
+                <th>Descripción de la actividad</th>+
+                <th>Fecha</th>
             </tr>
         </thead>
         <tbody>
             @foreach($actividades as $actividad)
                 <tr>
+                    @if (!$autorUnico)
+                        <td>{{ $actividad->user->name ?? 'Sin usuario' }}</td>
+                    @endif
                     <td>{{ $actividad->pertenencia_nombre }}</td>
                     <td>{{ $actividad->tipo_actividad_id == 1 ? 'Sustantiva' : 'Cotidiana' }}</td>
                     <td>
                         <strong>{{ $actividad->titulo }}</strong><br>
                         {{ $actividad->descripcion }}
                     </td>
-                    {{ $actividad->fecha }}
+                    <td>{{ \Carbon\Carbon::parse($actividad->fecha)->format('d/m/Y') }}</td>
                 </tr>
             @endforeach
         </tbody>
