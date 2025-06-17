@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\{Gerencia, UnidadAdministrativa, User, Actividad};
+use App\Models\{Gerencia, UnidadAdministrativa, User};
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\{TextInput, Select, DatePicker, Toggle, Radio, Placeholder, Section, Hidden};
