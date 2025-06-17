@@ -73,7 +73,7 @@ class GestionarUsuarios extends Page implements HasForms
                         return Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('nombre', 'id');
                     }
 
-                    if ($user->hasRole('gerente')) {
+                    if ($user->hasRole(['gerente'])) {
                         $gerencia = $user->gerenciaQueDirige;
                         return $gerencia ? [$gerencia->id => $gerencia->nombre] : [];
                     }
@@ -121,6 +121,6 @@ class GestionarUsuarios extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()?->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
+        return Auth::check() && Auth::user()?->hasAnyRole(['admin', 'administrador-unidad', 'gerente', 'subgerente']);
     }
 }

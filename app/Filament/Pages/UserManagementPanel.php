@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Select;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Support\Facades\DB;
 
 class UserManagementPanel extends Page implements HasTable
 {
@@ -29,52 +30,75 @@ class UserManagementPanel extends Page implements HasTable
     public function getTableQuery(): Builder
     {
         $authUser = auth()->user();
+        $rol = $authUser->getRoleNames()->first();
+        $perteneceId = $authUser->pertenece_id;
 
-        if ($authUser->hasRole('admin')) {
-            return User::query()
-                ->whereHas('roles', fn($q) => $q->whereIn('name', ['administrador-unidad', 'gerente', 'subgerente', 'usuario']))
-                ->where('id', '<>', $authUser->id)
-                ->with(['roles']);
+        if (!$rol || !$perteneceId) {
+            return User::query()->whereRaw('0 = 1');
         }
 
-        if ($authUser->hasRole('administrador-unidad')) {
-            $unidadId = $authUser->pertenece_id;
+        $rolesInferiores = User::rolesInferioresA($rol);
 
-            $gerenciasIds = Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('id');
-
+        // ADMIN:
+        if ($rol === 'admin') {
             return User::query()
+                ->select('users.*')
+                ->with('roles')
                 ->where('id', '<>', $authUser->id)
-                ->where(function ($query) use ($unidadId, $gerenciasIds) {
-                    $query->where(function ($q) use ($unidadId) {
-                        $q->where('pertenece_id', $unidadId)
-                            ->whereHas('roles', fn($r) => $r->where('name', 'administrador-unidad'));
-                    })
-                        ->orWhere(function ($q) use ($gerenciasIds) {
-                            $q->whereIn('pertenece_id', $gerenciasIds)
-                                ->whereHas('roles', fn($r) => $r->whereIn('name', ['gerente', 'subgerente', 'usuario']));
-                        });
-                })
-                ->with(['roles']);
+                ->whereHas('roles', fn($q) => $q->whereIn('name', $rolesInferiores));
         }
 
-        if ($authUser->hasRole('gerente')) {
-            $gerenciaId = $authUser->pertenece_id;
+        // ADMINISTRADOR-UNIDAD
+        if ($rol === 'administrador-unidad') {
+            $vista = DB::table('vista_unidades_extendida')->where('id', $perteneceId)->first();
 
-            return User::query()
-                ->where('id', '<>', $authUser->id)
-                ->where('pertenece_id', $gerenciaId)
-                ->whereHas('roles', fn($q) => $q->whereIn('name', ['subgerente', 'usuario']))
-                ->with(['roles']);
+            $ids = collect([
+                $vista->usuario_gerente_id,
+                $vista->usuario_subgerente_id,
+            ])
+                ->merge(explode(',', $vista->usuarios_user_ids ?? ''))
+                ->map(fn($id) => (int) trim($id))
+                ->filter()
+                ->unique()
+                ->toArray();
+
+            $query = User::query()
+                ->select('users.*')
+                ->with('roles')
+                ->whereIn('id', $ids)
+                ->whereHas('roles', fn($q) => $q->whereIn('name', $rolesInferiores));
+
+            return $query;
         }
 
-        if ($authUser->hasRole('subgerente')) {
-            $gerenciaId = $authUser->pertenece_id;
+        // GERENTE o SUBGERENTE
+        if (in_array($rol, ['gerente', 'subgerente'])) {
+            $vista = DB::table('vista_gerencias_extendida')->where('id', $perteneceId)->first();
+
+            $ids = collect();
+
+            if ($rol === 'gerente') {
+                $ids = collect([
+                    $vista->subgerente_id,
+                ])
+                    ->merge(explode(',', $vista->usuarios_user_ids ?? ''));
+            }
+
+            if ($rol === 'subgerente') {
+                $ids = collect(explode(',', $vista->usuarios_user_ids ?? ''));
+            }
+
+            $ids = $ids
+                ->map(fn($id) => (int) trim($id))
+                ->filter()
+                ->unique()
+                ->toArray();
 
             return User::query()
-                ->where('id', '<>', $authUser->id)
-                ->where('pertenece_id', $gerenciaId)
-                ->whereHas('roles', fn($q) => $q->where('name', 'usuario'))
-                ->with(['roles']);
+                ->select('users.*')
+                ->with('roles')
+                ->whereIn('id', $ids)
+                ->whereHas('roles', fn($q) => $q->whereIn('name', $rolesInferiores));
         }
 
         return User::query()->whereRaw('0 = 1');
@@ -90,28 +114,24 @@ class UserManagementPanel extends Page implements HasTable
                     return $query
                         ->orderBy('first_name', $direction)
                         ->orderBy('last_name', $direction);
-                })->searchable(query: function (Builder $query, string $search): Builder {
+                })
+                ->searchable(query: function (Builder $query, string $search): Builder {
                     return $query->where(function ($q) use ($search) {
                         $q->where('first_name', 'like', "%{$search}%")
                             ->orWhere('last_name', 'like', "%{$search}%");
                     });
                 }),
 
-            TextColumn::make('email')->label('Correo')->sortable()->searchable(),
+            TextColumn::make('email')
+                ->label('Correo')
+                ->sortable()
+                ->searchable(),
+
             TextColumn::make('roles.name')
                 ->label('Rol')
                 ->sortable()
                 ->searchable()
                 ->formatStateUsing(fn($state) => ucfirst($state)),
-            TextColumn::make('pertenencia')
-                ->label('Pertenencia')
-                ->formatStateUsing(function ($state, $record) {
-                    return match ($record->pertenencia_tipo) {
-                        'unidad' => UnidadAdministrativa::find($record->pertenece_id)?->nombre ?? '—',
-                        'gerencia' => Gerencia::find($record->pertenece_id)?->nombre ?? '—',
-                        default => '—',
-                    };
-                })
         ];
     }
 
@@ -148,12 +168,15 @@ class UserManagementPanel extends Page implements HasTable
     {
         return [
             Action::make('gestionar')
-                ->label(fn(User $record) => match ($record->roles->pluck('name')->first()) {
-                    'administrador-unidad' => 'Editar Unidad',
-                    'gerente' => 'Editar Gerencia',
-                    'subgerente' => 'Editar Subgerente',
-                    'usuario' => 'Editar Usuario',
-                    default => 'Gestionar',
+                ->label(function (User $record) {
+                    $rol = $record->getRoleNames()->first();
+                    return match ($rol) {
+                        'administrador-unidad' => 'Editar Unidad',
+                        'gerente' => 'Editar Gerencia',
+                        'subgerente' => 'Editar Subgerente',
+                        'usuario' => 'Editar Usuario',
+                        default => 'Gestionar',
+                    };
                 })
                 ->url(function (User $record) {
                     $rol = $record->roles->pluck('name')->first();
@@ -166,7 +189,6 @@ class UserManagementPanel extends Page implements HasTable
                     };
                 })
                 ->icon('heroicon-o-pencil-square')
-                ->extraAttributes(['class' => 'justify-start w-full'])
                 ->visible(fn(User $record) => in_array($record->roles->pluck('name')->first(), ['administrador-unidad', 'gerente', 'subgerente', 'usuario'])),
         ];
     }
