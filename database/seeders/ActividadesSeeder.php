@@ -107,7 +107,7 @@ class ActividadesSeeder extends Seeder
                 'descripcion' => 'Implementación de la funcionalidad de edición y eliminación de registros de actividades. Configuración de exportación de actividades en formato Word. Ajuste de bases de datos y adaptación del proyecto a nueva estructura y denominación.',
                 'tipo_actividad_id' => 1, // Sustantiva
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
-                'pertenencia_nombre' => 'Gerencia de Tecnología de la Información y Comunicación',
+                'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
                 'fecha' => '2025-04-17',
             ],
@@ -116,7 +116,7 @@ class ActividadesSeeder extends Seeder
                 'descripcion' => 'Despliegue de sistema en plesk bajo el dominio de https://reporte-actividades.cnf.gob.mx/login/',
                 'tipo_actividad_id' => 1, // Sustantiva
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
-                'pertenencia_nombre' => 'Gerencia de Tecnología de la Información y Comunicación',
+                'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
                 'fecha' => '2025-04-19',
             ],
@@ -125,7 +125,7 @@ class ActividadesSeeder extends Seeder
                 'descripcion' => 'Se monitorearon los servidores de bases de datos, asegurando la integridad y disponibilidad de la información.',
                 'tipo_actividad_id' => 2, // Cotidiana
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
-                'pertenencia_nombre' => 'Gerencia de Tecnología de la Información y Comunicación',
+                'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
                 'fecha' => '2025-04-22',
             ],
@@ -134,7 +134,7 @@ class ActividadesSeeder extends Seeder
                 'descripcion' => 'Se llevó a cabo un monitoreo constante de los sistemas en producción para garantizar su correcto funcionamiento y disponibilidad. Se revisaron métricas de desempeño, tiempos de respuesta y posibles incidencias, mediante las métricas y dashboard de plesk.',
                 'tipo_actividad_id' => 2, // Cotidiana
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
-                'pertenencia_nombre' => 'Gerencia de Tecnología de la Información y Comunicación',
+                'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
                 'fecha' => '2025-04-27',
             ],
