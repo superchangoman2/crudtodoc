@@ -83,7 +83,19 @@ class UserManagementPanel extends Page implements HasTable
     public function getTableColumns(): array
     {
         return [
-            TextColumn::make('name')->label('Nombre')->sortable()->searchable(),
+            TextColumn::make('name')
+                ->label('Nombre completo')
+                ->getStateUsing(fn($record) => $record->name)
+                ->sortable(query: function ($query, $direction) {
+                    return $query
+                        ->orderBy('first_name', $direction)
+                        ->orderBy('last_name', $direction);
+                })->searchable(query: function (Builder $query, string $search): Builder {
+                    return $query->where(function ($q) use ($search) {
+                        $q->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+                }),
             TextColumn::make('email')->label('Correo')->sortable()->searchable(),
             TextColumn::make('roles.name')
                 ->label('Rol')

@@ -82,9 +82,17 @@ class UserResource extends Resource
                 TextColumn::make('name')
                     ->label('Nombre completo')
                     ->getStateUsing(fn($record) => $record->name)
-                    ->sortable()
-                    ->searchable(),
-
+                    ->sortable(query: function ($query, $direction) {
+                        return $query
+                            ->orderBy('first_name', $direction)
+                            ->orderBy('last_name', $direction);
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->where(function ($q) use ($search) {
+                            $q->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%");
+                        });
+                    }),
                 TextColumn::make('email')
                     ->label('Correo')
                     ->sortable()
