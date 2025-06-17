@@ -90,15 +90,13 @@ class GestionarGerentes extends Page implements HasForms
 
     public function submit()
     {
+        if (!in_array($this->user->getRoleNames()->first(), ['gerente', 'subgerente'])) {
+            abort(403);
+        }
+
         $data = $this->form->getState();
 
-        if ($this->user->hasRole(['gerente', 'subgerente'])) {
-            $this->user->update(['pertenece_id' => $data['gerencia_id']]);
-        }
-
-        if ($this->user->hasRole(['gerente', 'subgerente'])) {
-            $this->user->update(['pertenece_id' => $data['gerencia_id']]);
-        }
+        $this->user->update(['pertenece_id' => $data['gerencia_id']]);
 
         Notification::make()
             ->title('Gerencia actualizada')
@@ -107,6 +105,7 @@ class GestionarGerentes extends Page implements HasForms
 
         return redirect()->route('filament.admin.pages.user-management-panel');
     }
+
     public static function shouldRegisterNavigation(): bool
     {
         return false;
