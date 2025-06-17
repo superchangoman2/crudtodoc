@@ -32,7 +32,9 @@ class ExportarActividadesController extends Controller
             $query->whereIn('user_id', $usuariosPermitidos);
         }
 
-        if (!empty($pertenenciasPermitidas)) {
+        $isPropio = !empty($data['propio']) && $data['propio'] === '1';
+
+        if (!$isPropio && !empty($pertenenciasPermitidas)) {
             $query->whereIn('pertenencia_nombre', $pertenenciasPermitidas);
         }
 
