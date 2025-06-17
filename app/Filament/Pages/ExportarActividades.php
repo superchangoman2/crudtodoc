@@ -339,7 +339,7 @@ class ExportarActividades extends Page implements HasForms
         ];
     }
 
-    public function getActions(): array
+    public function getExportActions(): array
     {
         return [
             Action::make('exportar')
