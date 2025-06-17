@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+
+use App\Traits\TracksSoftDeletes;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use App\Models\User;
 use App\Models\Gerencia;
 use App\Models\TipoActividad;
@@ -15,7 +17,7 @@ class Actividad extends Model
     public const TIPO_GERENCIA = 'Gerencia';
     public const TIPO_OTRO = 'Sin asignar';
 
-    use SoftDeletes;
+    use SoftDeletes, TracksSoftDeletes;
     protected $fillable = [
         'titulo',
         'descripcion',
@@ -52,20 +54,5 @@ class Actividad extends Model
     public function tipoActividad(): BelongsTo
     {
         return $this->belongsTo(TipoActividad::class);
-    }
-
-    protected static function booted()
-    {
-        static::deleting(function ($actividad) {
-            if (auth()->check() && !$actividad->isForceDeleting()) {
-                $actividad->deleted_by = auth()->id();
-                $actividad->saveQuietly();
-            }
-        });
-    }
-
-    public function eliminadoPor()
-    {
-        return $this->belongsTo(User::class, 'deleted_by');
     }
 }

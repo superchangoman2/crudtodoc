@@ -3,18 +3,27 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
-use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\{TextInput, Select, DatePicker};
+
 use Filament\Resources\Resource;
+
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Enums\ActionsPosition;
+use Filament\Tables\Actions\{
+    EditAction,
+    DeleteAction,
+    RestoreAction,
+    ForceDeleteAction
+};
+
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class UserResource extends Resource
 {
@@ -24,12 +33,22 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
     protected static ?string $navigationGroup = 'Base de datos';
     protected static ?string $pluralModelLabel = 'Usuarios';
+
+    public static function getEloquentQuery(): Builder
+    {
+        return static::getModel()::query()->withTrashed();
+    }
+
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                TextInput::make('name')
+                TextInput::make('first_name')
                     ->label('Nombre')
+                    ->required(),
+
+                TextInput::make('last_name')
+                    ->label('Apellido')
                     ->required(),
 
                 TextInput::make('email')
@@ -60,48 +79,75 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Nombre')
+                TextColumn::make('name')
+                    ->label('Nombre completo')
+                    ->getStateUsing(fn($record) => $record->name)
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('email')
+
+                TextColumn::make('email')
                     ->label('Correo')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('created_at')
+
+                TextColumn::make('roles.name')
+                    ->label('Rol')
+                    ->sortable()
+                    ->searchable(),
+
+                TextColumn::make('created_at')
                     ->label('Registrado el')
                     ->dateTime('d M Y, H:i')
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\Filter::make('created_at')
+                Filter::make('created_at')
                     ->form([
-                        Forms\Components\DatePicker::make('from')->label('Desde'),
-                        Forms\Components\DatePicker::make('until')->label('Hasta'),
+                        DatePicker::make('from')->label('Desde'),
+                        DatePicker::make('until')->label('Hasta'),
                     ])
                     ->query(function ($query, array $data) {
                         return $query
                             ->when($data['from'], fn($q) => $q->whereDate('created_at', '>=', $data['from']))
                             ->when($data['until'], fn($q) => $q->whereDate('created_at', '<=', $data['until']));
                     }),
+
+                Filter::make('trashed')
+                    ->label('Registros eliminados')
+                    ->visible(fn() => auth()->user()?->hasRole('admin'))
+                    ->form([
+                        Select::make('estado')
+                            ->label('Mostrar')
+                            ->options([
+                                'activos' => 'Solo activos',
+                                'eliminados' => 'Solo eliminados',
+                                'todos' => 'Todos',
+                            ])
+                            ->default('activos'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return match ($data['estado'] ?? 'activos') {
+                            'eliminados' => $query->onlyTrashed(),
+                            'todos' => $query->withTrashed(),
+                            default => $query->withoutTrashed(),
+                        };
+                    }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-            ], position: ActionsPosition::BeforeColumns)
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+                EditAction::make(),
+                DeleteAction::make(),
+
+                RestoreAction::make()
+                    ->visible(fn($record) => $record->trashed()),
+
+                ForceDeleteAction::make()
+                    ->visible(fn($record) => $record->trashed()),
+            ], position: ActionsPosition::BeforeColumns);
     }
-
-
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array

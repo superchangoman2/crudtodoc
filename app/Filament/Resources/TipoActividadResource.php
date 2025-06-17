@@ -3,24 +3,25 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TipoActividadResource\Pages;
-use App\Filament\Resources\TipoActividadResource\RelationManagers;
 use App\Models\TipoActividad;
-use Filament\Forms;
+
+use Filament\Forms\Components\{DatePicker, Select, TextInput};
 use Filament\Forms\Form;
-use Filament\Forms\Components\TextInput;
-use Filament\Tables\Columns\TextColumn;
+
 use Filament\Resources\Resource;
-use Filament\Tables;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Forms\Components\DatePicker;
-use Filament\Tables\Filters\Filter;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\BulkActionGroup;
+
+use Filament\Tables\Actions\{
+    DeleteAction,
+    EditAction,
+    RestoreAction,
+    ForceDeleteAction,
+};
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\ActionsPosition;
-use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
+
+use Illuminate\Database\Eloquent\{Builder, SoftDeletingScope};
 
 class TipoActividadResource extends Resource
 {
@@ -31,6 +32,17 @@ class TipoActividadResource extends Resource
     protected static ?string $navigationLabel = 'Tipo de Actividades';
     protected static ?string $pluralModelLabel = 'Tipo de Actividades';
     protected static ?string $navigationGroup = 'Base de datos';
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()?->hasRole('admin')) {
+            $query->withoutGlobalScope(SoftDeletingScope::class);
+        }
+
+        return $query;
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -70,16 +82,36 @@ class TipoActividadResource extends Resource
                             ->when($data['from'], fn($q) => $q->whereDate('created_at', '>=', $data['from']))
                             ->when($data['until'], fn($q) => $q->whereDate('created_at', '<=', $data['until']));
                     }),
+                Filter::make('trashed')
+                    ->label('Registros eliminados')
+                    ->visible(fn() => auth()->user()?->hasRole('admin'))
+                    ->form([
+                        Select::make('estado')
+                            ->label('Mostrar')
+                            ->options([
+                                'activos' => 'Solo activos',
+                                'eliminados' => 'Solo eliminados',
+                                'todos' => 'Todos',
+                            ])
+                            ->default('activos'),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return match ($data['estado'] ?? 'activos') {
+                            'eliminados' => $query->onlyTrashed(),
+                            'todos' => $query->withTrashed(),
+                            default => $query->withoutTrashed(),
+                        };
+                    })
             ])
             ->actions([
                 EditAction::make(),
                 DeleteAction::make(),
+                RestoreAction::make()
+                    ->visible(fn($record) => $record->trashed()),
+                ForceDeleteAction::make()
+                    ->visible(fn($record) => $record->trashed()),
             ], position: ActionsPosition::BeforeColumns)
-            ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+        ;
     }
 
     public static function getRelations(): array

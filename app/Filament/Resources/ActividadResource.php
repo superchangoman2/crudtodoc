@@ -5,27 +5,24 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\ActividadResource\Pages;
 use App\Models\Actividad;
 use App\Models\Gerencia;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Textarea;
+
+use Filament\Forms\Components\{DatePicker, Select, TextInput, Textarea};
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\Action;
-use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\DeleteBulkAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ForceDeleteAction;
-use Filament\Tables\Actions\ForceDeleteBulkAction;
-use Filament\Tables\Actions\RestoreAction;
-use Filament\Tables\Actions\RestoreBulkAction;
+use Filament\Tables\Actions\{
+    Action,
+    DeleteAction,
+    EditAction,
+    ForceDeleteAction,
+    RestoreAction,
+};
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\Filter;
+use Filament\Tables\Enums\ActionsPosition;
+use Filament\Tables\Filters\{Filter, SelectFilter};
 use Filament\Tables\Table;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Enums\ActionsPosition;
 
 
 class ActividadResource extends Resource
@@ -39,12 +36,8 @@ class ActividadResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = Actividad::query()->withTrashed();
         $user = auth()->user();
-
-        if ($user->hasRole('admin')) {
-            return $query->withoutGlobalScope(SoftDeletingScope::class);
-        }
 
         if ($user->hasRole('administrador-unidad')) {
             $unidadNombre = $user->unidadAdministrativa?->nombre;
@@ -186,21 +179,17 @@ class ActividadResource extends Resource
                             ->when($data['from'], fn($q) => $q->whereDate('created_at', '>=', $data['from']))
                             ->when($data['until'], fn($q) => $q->whereDate('created_at', '<=', $data['until']));
                     }),
-                Filter::make('trashed')
+                SelectFilter::make('trashed')
                     ->label('Registros eliminados')
                     ->visible(fn() => auth()->user()?->hasRole('admin'))
-                    ->form([
-                        Select::make('estado')
-                            ->label('Mostrar')
-                            ->options([
-                                'activos' => 'Solo activos',
-                                'eliminados' => 'Solo eliminados',
-                                'todos' => 'Todos',
-                            ])
-                            ->default('activos'),
+                    ->options([
+                        'activos' => 'Solo activos',
+                        'eliminados' => 'Solo eliminados',
+                        'todos' => 'Todos',
                     ])
-                    ->query(function (Builder $query, array $data) {
-                        return match ($data['estado'] ?? 'activos') {
+                    ->default('activos')
+                    ->query(function (Builder $query, string $value) {
+                        return match ($value) {
                             'eliminados' => $query->onlyTrashed(),
                             'todos' => $query->withTrashed(),
                             default => $query->withoutTrashed(),
@@ -227,16 +216,7 @@ class ActividadResource extends Resource
                         return redirect()->route('actividades.exportar-pdf');
                     }),
             ])
-            ->bulkActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make()
-                        ->visible(fn() => auth()->user()?->hasRole('admin')),
-                    RestoreBulkAction::make()
-                        ->visible(fn() => auth()->user()?->hasRole('admin')),
-                    ForceDeleteBulkAction::make()
-                        ->visible(fn() => auth()->user()?->hasRole('admin')),
-                ]),
-            ]);
+        ;
     }
 
     public static function getRelations(): array

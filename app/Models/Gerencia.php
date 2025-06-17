@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\TracksSoftDeletes;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Gerencia extends Model
 {
+    use SoftDeletes, TracksSoftDeletes;
     protected $fillable = ['nombre', 'unidad_administrativa_id'];
 
     public function users(): HasMany
