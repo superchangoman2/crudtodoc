@@ -73,7 +73,7 @@ class GestionarUsuarios extends Page implements HasForms
                         return Gerencia::where('unidad_administrativa_id', $user->pertenece_id)->pluck('nombre', 'id');
                     }
 
-                    if ($user->hasRole('gerente')) {
+                    if ($user->hasRole(['gerente', 'subgerente'])) {
                         return Gerencia::where('id', $user->pertenece_id)->pluck('nombre', 'id');
                     }
 
