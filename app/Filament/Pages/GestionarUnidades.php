@@ -28,7 +28,7 @@ class GestionarUnidades extends Page implements HasForms
     {
         $this->user = User::findOrFail(request()->get('user'));
 
-        $rolUsuario = $this->user->roles->pluck('name')->first();
+        $rolUsuario = $this->user->getRoleNames()->first();
 
         if ($rolUsuario !== 'administrador-unidad') {
             redirect()->route('filament.admin.pages.user-management-panel')->send();
@@ -63,7 +63,8 @@ class GestionarUnidades extends Page implements HasForms
 
             Select::make('pertenece_id')
                 ->label('Unidad administrativa asignada')
-                ->options(UnidadAdministrativa::pluck('nombre', 'id'))
+                ->options(fn() => UnidadAdministrativa::pluck('nombre', 'id'))
+                ->rules(['exists:unidades_administrativas,id'])
                 ->placeholder('Selecciona una unidad')
                 ->nullable()
                 ->required(),
@@ -84,6 +85,10 @@ class GestionarUnidades extends Page implements HasForms
 
     public function submit()
     {
+        if ($this->user->getRoleNames()->first() !== 'administrador-unidad') {
+            abort(403);
+        }
+
         $data = $this->form->getState();
 
         $this->user->update(['pertenece_id' => $data['pertenece_id']]);

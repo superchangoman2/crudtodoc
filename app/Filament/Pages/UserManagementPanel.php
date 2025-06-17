@@ -57,18 +57,27 @@ class UserManagementPanel extends Page implements HasTable
                 $vista->usuario_subgerente_id,
             ])
                 ->merge(explode(',', $vista->usuarios_user_ids ?? ''))
-                ->map(fn($id) => (int) trim($id))
+                ->map(fn($id) => (int) trim($id));
+
+            // Agregar usuarios sin pertenencia (gerente, subgerente y usuario)
+            $sinPertenencia = User::query()
+                ->select('id')
+                ->whereNull('pertenece_id')
+                ->whereHas('roles', fn($q) => $q->whereIn('name', ['gerente', 'subgerente', 'usuario']))
+                ->pluck('id')
+                ->toArray();
+
+            $ids = $ids
+                ->merge($sinPertenencia)
                 ->filter()
                 ->unique()
                 ->toArray();
 
-            $query = User::query()
+            return User::query()
                 ->select('users.*')
                 ->with('roles')
                 ->whereIn('id', $ids)
                 ->whereHas('roles', fn($q) => $q->whereIn('name', $rolesInferiores));
-
-            return $query;
         }
 
         // GERENTE o SUBGERENTE
@@ -82,10 +91,28 @@ class UserManagementPanel extends Page implements HasTable
                     $vista->subgerente_id,
                 ])
                     ->merge(explode(',', $vista->usuarios_user_ids ?? ''));
+
+                $sinGerencia = User::query()
+                    ->select('id')
+                    ->whereNull('pertenece_id')
+                    ->whereHas('roles', fn($q) => $q->whereIn('name', ['subgerente', 'usuario']))
+                    ->pluck('id')
+                    ->toArray();
+
+                $ids = $ids->merge($sinGerencia);
             }
 
             if ($rol === 'subgerente') {
                 $ids = collect(explode(',', $vista->usuarios_user_ids ?? ''));
+
+                $usuariosSinGerencia = User::query()
+                    ->select('id')
+                    ->whereNull('pertenece_id')
+                    ->whereHas('roles', fn($q) => $q->where('name', 'usuario'))
+                    ->pluck('id')
+                    ->toArray();
+
+                $ids = $ids->merge($usuariosSinGerencia);
             }
 
             $ids = $ids

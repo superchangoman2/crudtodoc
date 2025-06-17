@@ -28,7 +28,7 @@ class GestionarGerentes extends Page implements HasForms
     {
         $this->user = User::findOrFail(request()->get('user'));
 
-        $rolUsuario = $this->user->roles->pluck('name')->first();
+        $rolUsuario = $this->user->getRoleNames()->first();
 
         if (!in_array($rolUsuario, ['gerente', 'subgerente'])) {
             redirect()->route('filament.admin.pages.user-management-panel')->send();
@@ -38,7 +38,7 @@ class GestionarGerentes extends Page implements HasForms
             'name' => $this->user->name,
             'email' => $this->user->email,
             'role' => $rolUsuario,
-            'gerencia_id' => $this->user->pertenece_id, // ya no se usa gerencia_id
+            'gerencia_id' => $this->user->pertenece_id,
         ]);
     }
     public function getFormSchema(): array
@@ -58,33 +58,19 @@ class GestionarGerentes extends Page implements HasForms
                     }
 
                     if ($user->hasRole('administrador-unidad')) {
-                        $unidadId = $user->unidadAdministrativa?->id;
+                        return Gerencia::where('unidad_administrativa_id', $user->pertenece_id)->pluck('nombre', 'id');
+                    }
 
-                        if (!$unidadId) {
-                            return [];
-                        }
-
-                        return Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('nombre', 'id');
+                    if ($user->hasRole('gerente')) {
+                        return Gerencia::where('id', $user->pertenece_id)->pluck('nombre', 'id');
                     }
 
                     return [];
                 })
-                ->disabled(function () {
-                    $user = auth()->user();
-
-                    if ($user->hasRole('admin')) {
-                        return false;
-                    }
-
-                    if ($user->hasRole('administrador-unidad')) {
-                        return $user->unidadAdministrativa === null;
-                    }
-
-                    return true;
-                })
+                ->rules(['exists:gerencias,id'])
+                ->disabled(fn() => auth()->user()->hasRole('administrador-unidad') && auth()->user()->pertenece_id === null)
                 ->nullable()
                 ->placeholder('Selecciona una gerencia'),
-
         ];
     }
 
@@ -110,6 +96,10 @@ class GestionarGerentes extends Page implements HasForms
             $this->user->update(['pertenece_id' => $data['gerencia_id']]);
         }
 
+        if ($this->user->hasRole(['gerente', 'subgerente'])) {
+            $this->user->update(['pertenece_id' => $data['gerencia_id']]);
+        }
+
         Notification::make()
             ->title('Gerencia actualizada')
             ->success()
@@ -124,6 +114,6 @@ class GestionarGerentes extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad']);
+        return Auth::check() && Auth::user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
     }
 }
