@@ -17,6 +17,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 4,
+                'created_by_role' => 'subgerente',
                 'fecha' => '2025-06-01',
             ],
             [
@@ -26,6 +27,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 4,
+                'created_by_role' => 'subgerente',
                 'fecha' => '2025-06-03',
             ],
             [
@@ -35,7 +37,20 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 1,
+                'created_by_role' => 'admin',
                 'fecha' => '2025-06-05',
+            ],
+            [
+                'titulo' => 'Borrardo suave',
+                'descripcion' => 'Lo hice por error.',
+                'tipo_actividad_id' => 1,
+                'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
+                'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
+                'user_id' => 1,
+                'deleted_at' => '2025-06-17 16:42:28',
+                'deleted_by' => '1',
+                'created_by_role' => 'subgerente',
+                'fecha' => '2025-06-01',
             ],
             [
                 'titulo' => 'Elaboración de informe mensual',
@@ -44,6 +59,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 1,
+                'created_by_role' => 'admin',
                 'fecha' => '2025-06-06',
             ],
             [
@@ -53,6 +69,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 3,
+                'created_by_role' => 'gerente',
                 'fecha' => '2025-06-07',
             ],
             [
@@ -62,6 +79,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_UNIDAD,
                 'pertenencia_nombre' => 'Unidad de Administración y Finanzas',
                 'user_id' => 3,
+                'created_by_role' => 'gerente',
                 'fecha' => '2025-06-02',
             ],
             [
@@ -71,6 +89,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_UNIDAD,
                 'pertenencia_nombre' => 'Unidad de Administración y Finanzas',
                 'user_id' => 2,
+                'created_by_role' => 'administrador-unidad',
                 'fecha' => '2025-06-04',
             ],
             [
@@ -80,6 +99,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_UNIDAD,
                 'pertenencia_nombre' => 'Unidad de Administración y Finanzas',
                 'user_id' => 2,
+                'created_by_role' => 'administrador-unidad',
                 'fecha' => '2025-06-08',
             ],
             [
@@ -89,6 +109,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_UNIDAD,
                 'pertenencia_nombre' => 'Unidad de Administración y Finanzas',
                 'user_id' => 2,
+                'created_by_role' => 'administrador-unidad',
                 'fecha' => '2025-06-09',
             ],
             [
@@ -98,6 +119,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_UNIDAD,
                 'pertenencia_nombre' => 'Unidad de Administración y Finanzas',
                 'user_id' => 2,
+                'created_by_role' => 'administrador-unidad',
                 'fecha' => '2025-06-10',
             ],
         ];
@@ -105,37 +127,41 @@ class ActividadesSeeder extends Seeder
             [
                 'titulo' => 'Integración del módulo de captura de actividades en el sistema de reportes',
                 'descripcion' => 'Implementación de la funcionalidad de edición y eliminación de registros de actividades. Configuración de exportación de actividades en formato Word. Ajuste de bases de datos y adaptación del proyecto a nueva estructura y denominación.',
-                'tipo_actividad_id' => 1, // Sustantiva
+                'tipo_actividad_id' => 1,
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
+                'created_by_role' => 'usuario-unidad',
                 'fecha' => '2025-04-17',
             ],
             [
                 'titulo' => 'Avance en el desarrollo del sistema de reportes de actividades',
                 'descripcion' => 'Despliegue de sistema en plesk bajo el dominio de https://reporte-actividades.cnf.gob.mx/login/',
-                'tipo_actividad_id' => 1, // Sustantiva
+                'tipo_actividad_id' => 1,
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
+                'created_by_role' => 'usuario-unidad',
                 'fecha' => '2025-04-19',
             ],
             [
                 'titulo' => 'Administración de bases de datos de sistemas institucionales existentes',
                 'descripcion' => 'Se monitorearon los servidores de bases de datos, asegurando la integridad y disponibilidad de la información.',
-                'tipo_actividad_id' => 2, // Cotidiana
+                'tipo_actividad_id' => 2,
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
+                'created_by_role' => 'usuario-unidad',
                 'fecha' => '2025-04-22',
             ],
             [
                 'titulo' => 'Monitoreo de sistemas en producción de la GTIC',
                 'descripcion' => 'Se llevó a cabo un monitoreo constante de los sistemas en producción para garantizar su correcto funcionamiento y disponibilidad. Se revisaron métricas de desempeño, tiempos de respuesta y posibles incidencias, mediante las métricas y dashboard de plesk.',
-                'tipo_actividad_id' => 2, // Cotidiana
+                'tipo_actividad_id' => 2,
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
+                'created_by_role' => 'usuario-unidad',
                 'fecha' => '2025-04-27',
             ],
         ];

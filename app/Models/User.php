@@ -18,6 +18,38 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles, SoftDeletes, TracksSoftDeletes;
 
+    public static function jerarquiaRoles(): array
+    {
+        return [
+            'admin' => 0,
+            'administrador-unidad' => 1,
+            'gerente' => 2,
+            'subgerente' => 3,
+            'usuario' => 4,
+        ];
+    }
+
+    public function nivelJerarquico(): int
+    {
+        return self::jerarquiaRoles()[$this->getRoleNames()->first()] ?? PHP_INT_MAX;
+    }
+
+    public static function rolesInferioresA(string $rol): array
+    {
+        $jerarquia = self::jerarquiaRoles();
+
+        if (!isset($jerarquia[$rol])) {
+            return [];
+        }
+
+        $nivel = $jerarquia[$rol];
+
+        return collect($jerarquia)
+            ->filter(fn($n) => $n > $nivel)
+            ->keys()
+            ->values()
+            ->toArray();
+    }
 
     /**
      * The attributes that are mass assignable.

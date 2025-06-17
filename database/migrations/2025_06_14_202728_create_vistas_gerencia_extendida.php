@@ -52,7 +52,7 @@ return new class extends Migration {
                     ) AS subgerente_email,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
@@ -60,7 +60,7 @@ return new class extends Migration {
                     ) AS usuarios_admin_ids,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
@@ -112,7 +112,7 @@ return new class extends Migration {
                     ) AS subgerente_email,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
@@ -120,7 +120,7 @@ return new class extends Migration {
                     ) AS usuarios_admin_ids,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id

@@ -46,7 +46,7 @@ return new class extends Migration {
                     ) AS gerencias_nombres,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN gerencias g ON g.id = u.pertenece_id
                         JOIN model_has_roles mr ON mr.model_id = u.id
@@ -91,7 +91,7 @@ return new class extends Migration {
                     ) AS usuario_subgerente_email,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN gerencias g ON g.id = u.pertenece_id
                         JOIN model_has_roles mr ON mr.model_id = u.id
@@ -137,7 +137,7 @@ return new class extends Migration {
                     ) AS gerencias_nombres,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN gerencias g ON g.id = u.pertenece_id AND g.deleted_at IS NULL
                         JOIN model_has_roles mr ON mr.model_id = u.id
@@ -182,7 +182,7 @@ return new class extends Migration {
                     ) AS usuario_subgerente_email,
 
                     (
-                        SELECT GROUP_CONCAT(u.id ORDER BY u.name)
+                        SELECT GROUP_CONCAT(u.id ORDER BY u.id)
                         FROM users u
                         JOIN gerencias g ON g.id = u.pertenece_id AND g.deleted_at IS NULL
                         JOIN model_has_roles mr ON mr.model_id = u.id
@@ -194,10 +194,7 @@ return new class extends Migration {
                 WHERE ua.deleted_at IS NULL;
         ');
     }
-
     public function down(): void
     {
-        DB::unprepared('DROP VIEW IF EXISTS vista_gerencias_extendida_admin');
-        DB::unprepared('DROP VIEW IF EXISTS vista_unidades_extendida_admin');
     }
 };

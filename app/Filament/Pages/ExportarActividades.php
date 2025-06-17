@@ -39,15 +39,31 @@ class ExportarActividades extends Page implements HasForms
         $quincenaActual = "$mes-$quincena";
         $mesActual = str_pad($mes, 2, '0', STR_PAD_LEFT);
 
+        // $this->form->fill([
+        //     'incluir_eliminados' => false,
+        //     'propio' => true,
+        //     'unidad_administrativa' => null,
+        //     'gerencia' => null,
+        //     'gerencias_de_unidad' => null,
+        //     'rol_usuario' => null,
+        //     'usuario' => null,
+        //     'modo_fecha' => 'quincena',
+        //     'year' => now()->year,
+        //     'quincena_seleccionada' => $quincenaActual,
+        //     'mes_seleccionado' => $mesActual,
+        //     'fecha_inicio' => now()->startOfMonth()->toDateString(),
+        //     'fecha_fin' => now()->toDateString(),
+        // ]);
+
         $this->form->fill([
             'incluir_eliminados' => false,
-            'propio' => 'true',
+            'propio' => false,
             'unidad_administrativa' => null,
             'gerencia' => null,
             'gerencias_de_unidad' => null,
             'rol_usuario' => null,
             'usuario' => null,
-            'modo_fecha' => 'quincena',
+            'modo_fecha' => 'anual',
             'year' => now()->year,
             'quincena_seleccionada' => $quincenaActual,
             'mes_seleccionado' => $mesActual,
@@ -107,7 +123,7 @@ class ExportarActividades extends Page implements HasForms
         };
 
         return [
-            Section::make('- Seleccionar usuarios')
+            Section::make('- Seleccionar usuario')
                 ->visible(fn($get) => !$get('propio') && auth()->user()->hasRole(['admin', 'administrador-unidad', 'gerente', 'subgerente']))
                 ->schema([
                     Select::make('unidad_administrativa')
@@ -118,12 +134,10 @@ class ExportarActividades extends Page implements HasForms
                         ->live()
                         ->visible(fn($get) => !$get('propio') && auth()->user()->hasRole('admin'))
                         ->afterStateUpdated(function ($state, callable $set) {
-                            if (blank($state)) {
-                                $set('gerencia', null);
-                                $set('rol_usuario', null);
-                                $set('usuario', null);
-                                $set('gerencias_de_unidad', null);
-                            }
+                            $set('gerencias_de_unidad', null);
+                            $set('gerencia', null);
+                            $set('rol_usuario', null);
+                            $set('usuario', null);
 
                             $gerenciasIds = Gerencia::where('unidad_administrativa_id', $state)
                                 ->pluck('id')
@@ -151,10 +165,8 @@ class ExportarActividades extends Page implements HasForms
                         ->visible(fn($get) => !$get('propio') && filled($get('unidad_administrativa')) && auth()->user()->hasAnyRole(['admin', 'administrador-unidad']))
                         ->live()
                         ->afterStateUpdated(function ($state, callable $set) {
-                            if (blank($state)) {
-                                $set('rol_usuario', null);
-                                $set('usuario', null);
-                            }
+                            $set('rol_usuario', null);
+                            $set('usuario', null);
                         }),
 
                     Select::make('rol_usuario')
@@ -163,7 +175,9 @@ class ExportarActividades extends Page implements HasForms
                         ->placeholder('Todos')
                         ->searchable()
                         ->visible(fn() => auth()->user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente']))
-                        ->live(),
+                        ->live()->afterStateUpdated(function ($state, callable $set) {
+                            $set('usuario', null);
+                        }),
 
                     Select::make('usuario')
                         ->label('Usuario')
@@ -311,15 +325,15 @@ class ExportarActividades extends Page implements HasForms
                         )
                         ->visible(true),
 
-                    Placeholder::make('debug_unidad_gerencia_usuarios')
-                        ->label('🟦 Unidad / Gerencias / Usuarios')
+                    Placeholder::make('debug_unidad_gerencia_usuario')
+                        ->label('🟦 Unidad / Gerencias / Usuario')
                         ->content(
                             fn($get) =>
                             "unidad_administrativa: " . json_encode($get('unidad_administrativa')) .
-                            "gerencias: " . json_encode($get('gerencia')) .
+                            "gerencia: " . json_encode($get('gerencia')) .
                             "gerencias_de_unidad" . json_encode($get("gerencias_de_unidad")) .
                             "rol_usuario: " . json_encode($get('rol_usuario')) .
-                            "usuarios: " . json_encode($get('usuario'))
+                            "usuario: " . json_encode($get('usuario'))
                         )
                         ->visible(true),
 
@@ -351,7 +365,34 @@ class ExportarActividades extends Page implements HasForms
     }
     public function exportar()
     {
-        $params = http_build_query(array_filter($this->formData));
+        $data = $this->formData;
+
+        match ($data['modo_fecha']) {
+            'quincena' => [
+                $data['mes_seleccionado'] = null,
+                $data['fecha_inicio'] = null,
+                $data['fecha_fin'] = null,
+            ],
+            'mes' => [
+                $data['quincena_seleccionada'] = null,
+                $data['fecha_inicio'] = null,
+                $data['fecha_fin'] = null,
+            ],
+            'anual' => [
+                $data['quincena_seleccionada'] = null,
+                $data['mes_seleccionado'] = null,
+                $data['fecha_inicio'] = null,
+                $data['fecha_fin'] = null,
+            ],
+            'personalizado' => [
+                $data['quincena_seleccionada'] = null,
+                $data['mes_seleccionado'] = null,
+                $data['year'] = null,
+            ],
+            default => [],
+        };
+
+        $params = http_build_query(array_filter($data));
         return redirect()->to('/exportar-pdf?' . $params);
     }
 }

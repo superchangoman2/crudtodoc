@@ -76,7 +76,7 @@
     </div>
 
     <h2 class="header-text">
-        {{ $titulo }}@if ($autorUnico) de {{ $autorUnico }}@endif
+        {{ $titulo }}
     </h2>
     @if ($rangoFechas)
         <p class="header-text">{{ $rangoFechas }}</p>
