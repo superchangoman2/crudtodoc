@@ -41,7 +41,7 @@ class ExportarActividades extends Page implements HasForms
 
         $this->form->fill([
             'incluir_eliminados' => false,
-            'propio' => true,
+            'propio' => 'true',
             'unidad_administrativa' => null,
             'gerencia' => null,
             'gerencias_de_unidad' => null,

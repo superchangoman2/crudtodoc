@@ -237,8 +237,8 @@ class ActividadResource extends Resource
                         $quincenaActual = "$mes-$quincena";
 
                         $params = http_build_query([
-                            'propio' => true,
-                            'incluir_eliminados' => false,
+                            'propio' => 'true',
+                            'incluir_eliminados' => 'false',
                             'modo_fecha' => 'quincena',
                             'year' => $now->year,
                             'quincena_seleccionada' => $quincenaActual,

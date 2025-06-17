@@ -24,7 +24,7 @@ class TestUsersSeeder extends Seeder
                 'first_name' => 'admin',
                 'last_name' => 'super',
                 'password' => bcrypt('admin123'),
-                'pertenece_id' => 6,
+                'pertenece_id' => 26,
             ]
         );
 
