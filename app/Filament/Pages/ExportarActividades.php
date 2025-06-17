@@ -55,13 +55,13 @@ class ExportarActividades extends Page implements HasForms
 
         $datosIniciales = [
             'incluir_eliminados' => false,
-            'propio' => false,
+            'propio' => true,
             'unidad_administrativa' => $rol === 'administrador-unidad' ? $pertenenciaId : $unidadId,
             'gerencia' => in_array($rol, ['gerente', 'subgerente']) ? $pertenenciaId : null,
             'gerencias_de_unidad' => $gerenciasIds,
             'rol_usuario' => null,
             'usuario' => null,
-            'modo_fecha' => 'anual',
+            'modo_fecha' => 'quincenal',
             'year' => now()->year,
             'quincena_seleccionada' => $quincenaActual,
             'mes_seleccionado' => $mesActual,
