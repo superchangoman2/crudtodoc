@@ -17,18 +17,15 @@ class GestionarUsuarios extends Page implements HasForms
     use Forms\Concerns\InteractsWithForms;
 
     protected static ?string $navigationLabel = null;
-    protected static ?string $title = 'Gestionar Gerencia';
+    protected static ?string $title = 'Gestionar Usuario';
     protected static string $view = 'filament.pages.gestionar-usuarios';
 
-
     public $user;
-    public $name, $email, $role;
-    public $unidad_id, $gerencia_id;
+    public $name, $email, $role, $pertenece_id;
 
     public function mount(): void
     {
         $this->user = User::findOrFail(request()->get('user'));
-
         $rolUsuario = $this->user->roles->pluck('name')->first();
 
         if ($rolUsuario !== 'usuario') {
@@ -38,16 +35,13 @@ class GestionarUsuarios extends Page implements HasForms
         $this->form->fill([
             'name' => $this->user->name,
             'email' => $this->user->email,
-            'role' => $rolUsuario,
-            'unidad_id' => $this->user->unidad_administrativa_id,
-            'gerencia_id' => $this->user->gerencia_id,
+            'role' => 'usuario',
+            'pertenece_id' => $this->user->pertenece_id,
         ]);
     }
 
     public function getFormSchema(): array
     {
-        $rolUsuario = $this->user->roles->pluck('name')->first();
-
         return [
             TextInput::make('name')
                 ->label('Nombre')
@@ -61,11 +55,11 @@ class GestionarUsuarios extends Page implements HasForms
 
             TextInput::make('role')
                 ->label('Rol')
-                ->default($rolUsuario)
+                ->default('usuario')
                 ->disabled()
                 ->dehydrated(false),
 
-            Select::make('gerencia_id')
+            Select::make('pertenece_id')
                 ->label('Gerencia adscrita')
                 ->options(function () {
                     $user = auth()->user();
@@ -75,54 +69,26 @@ class GestionarUsuarios extends Page implements HasForms
                     }
 
                     if ($user->hasRole('administrador-unidad')) {
-                        $unidadId = $user->unidadAdministrativa?->id;
-
-                        if (!$unidadId) {
-                            return [];
-                        }
-
+                        $unidadId = $user->pertenece_id;
                         return Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('nombre', 'id');
                     }
 
                     if ($user->hasRole('gerente')) {
                         $gerencia = $user->gerenciaQueDirige;
-
-                        if (!$gerencia) {
-                            return [];
-                        }
-
-                        return Gerencia::where('id', $gerencia->id)->pluck('nombre', 'id');
+                        return $gerencia ? [$gerencia->id => $gerencia->nombre] : [];
                     }
 
                     return [];
                 })
-                ->disabled(function () {
-                    $user = auth()->user();
-
-                    if ($user->hasRole('admin')) {
-                        return false;
-                    }
-
-                    if ($user->hasRole('administrador-unidad')) {
-                        return $user->unidadAdministrativa === null;
-                    }
-
-                    if ($user->hasRole('gerente')) {
-                        return $user->gerenciaQueDirige === null;
-                    }
-
-                    return true;
-                })
                 ->placeholder('Selecciona una gerencia')
-                ->nullable(),
-
+                ->nullable()
+                ->required(),
         ];
     }
 
     public function removeKey()
     {
-        $this->user->gerencia_id = null;
-        $this->user->save();
+        $this->user->update(['pertenece_id' => null]);
 
         Notification::make()
             ->title('Gerencia retirada del usuario')
@@ -136,9 +102,9 @@ class GestionarUsuarios extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        // Solo actualiza la gerencia_id, que puede ser null
-        $this->user->gerencia_id = $data['gerencia_id'];
-        $this->user->save();
+        $this->user->update([
+            'pertenece_id' => $data['pertenece_id'],
+        ]);
 
         Notification::make()
             ->title('Usuario actualizado')
@@ -146,7 +112,6 @@ class GestionarUsuarios extends Page implements HasForms
             ->send();
 
         return redirect()->route('filament.admin.pages.user-management-panel');
-
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -158,5 +123,4 @@ class GestionarUsuarios extends Page implements HasForms
     {
         return Auth::check() && Auth::user()?->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
     }
-
 }

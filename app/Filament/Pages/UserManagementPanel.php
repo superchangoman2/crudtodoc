@@ -3,6 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Models\User;
+use App\Models\Gerencia;
+use App\Models\UnidadAdministrativa;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
@@ -30,92 +32,75 @@ class UserManagementPanel extends Page implements HasTable
 
         if ($authUser->hasRole('admin')) {
             return User::query()
-                ->whereHas('roles', fn($q) => $q->whereIn('name', ['administrador-unidad', 'gerente', 'usuario']))
-                ->with(['roles', 'gerencia', 'unidadAdministrativa']);
+                ->whereHas('roles', fn($q) => $q->whereIn('name', ['administrador-unidad', 'gerente', 'subgerente', 'usuario']))
+                ->where('id', '<>', $authUser->id)
+                ->with(['roles']);
         }
 
         if ($authUser->hasRole('administrador-unidad')) {
-            $unidadId = $authUser->unidadAdministrativa?->id;
+            $unidadId = $authUser->pertenece_id;
+
+            $gerenciasIds = Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('id');
 
             return User::query()
-                ->where(function ($query) use ($unidadId) {
-                    // Gerentes con gerencia en su unidad o sin gerencia
+                ->where('id', '<>', $authUser->id)
+                ->where(function ($query) use ($unidadId, $gerenciasIds) {
                     $query->where(function ($q) use ($unidadId) {
-                        $q->whereHas('roles', fn($r) => $r->where('name', 'gerente'))
-                            ->where(function ($g) use ($unidadId) {
-                                $g->whereHas('gerenciaQueDirige', fn($h) => $h->where('unidad_administrativa_id', $unidadId))
-                                    ->orWhereDoesntHave('gerenciaQueDirige');
-                            });
+                        $q->where('pertenece_id', $unidadId)
+                            ->whereHas('roles', fn($r) => $r->where('name', 'administrador-unidad'));
                     })
-                        // Usuarios con gerencia en su unidad o sin gerencia
-                        ->orWhere(function ($q) use ($unidadId) {
-                        $q->whereHas('roles', fn($r) => $r->where('name', 'usuario'))
-                            ->where(function ($u) use ($unidadId) {
-                                $u->whereHas('gerencia', fn($g) => $g->where('unidad_administrativa_id', $unidadId))
-                                    ->orWhereNull('gerencia_id');
-                            });
-                    });
+                        ->orWhere(function ($q) use ($gerenciasIds) {
+                            $q->whereIn('pertenece_id', $gerenciasIds)
+                                ->whereHas('roles', fn($r) => $r->whereIn('name', ['gerente', 'subgerente', 'usuario']));
+                        });
                 })
-                ->with(['roles', 'gerencia', 'unidadAdministrativa']);
+                ->with(['roles']);
         }
 
         if ($authUser->hasRole('gerente')) {
-            $gerenciaId = $authUser->gerenciaQueDirige?->id;
+            $gerenciaId = $authUser->pertenece_id;
 
             return User::query()
-                ->whereHas('roles', fn($q) => $q->where('name', 'usuario'))
-                ->where(function ($q) use ($gerenciaId) {
-                    $q->where('gerencia_id', $gerenciaId)
-                        ->orWhereNull('gerencia_id');
-                })
-                ->with(['roles', 'gerencia', 'unidadAdministrativa']);
+                ->where('id', '<>', $authUser->id)
+                ->where('pertenece_id', $gerenciaId)
+                ->whereHas('roles', fn($q) => $q->whereIn('name', ['subgerente', 'usuario']))
+                ->with(['roles']);
         }
 
-        return User::query()->whereRaw('0 = 1'); // No accede si no tiene rol permitido
-    }
+        if ($authUser->hasRole('subgerente')) {
+            $gerenciaId = $authUser->pertenece_id;
 
+            return User::query()
+                ->where('id', '<>', $authUser->id)
+                ->where('pertenece_id', $gerenciaId)
+                ->whereHas('roles', fn($q) => $q->where('name', 'usuario'))
+                ->with(['roles']);
+        }
+
+        return User::query()->whereRaw('0 = 1');
+    }
 
     public function getTableColumns(): array
     {
         return [
-            TextColumn::make('name')->label('Nombre')
-                ->sortable()
-                ->searchable(),
-            TextColumn::make('email')->label('Correo')
-                ->sortable()
-                ->searchable(),
+            TextColumn::make('name')->label('Nombre')->sortable()->searchable(),
+            TextColumn::make('email')->label('Correo')->sortable()->searchable(),
             TextColumn::make('roles.name')
                 ->label('Rol')
                 ->sortable()
                 ->searchable()
                 ->formatStateUsing(fn($state) => ucfirst($state)),
-
-            TextColumn::make('gerencia.nombre')
-                ->label('Gerencia')
-                ->searchable()
-                ->visible(function () {
-                    $usuario = auth()->user();
-                    return $usuario && $usuario->hasAnyRole(['admin', 'administrador-unidad', 'gerente']);
-                }),
-
-            TextColumn::make('gerenciaQueDirige.nombre')
-                ->label('Gerencia que dirige')
-                ->visible(function () {
-                    $usuario = auth()->user();
-                    return $usuario && $usuario->hasAnyRole(['admin', 'administrador-unidad']);
-                }),
-
-            TextColumn::make('unidadAdministrativa.nombre')
-                ->label('Unidad Administrativa')
-                ->searchable()
-                ->visible(function () {
-                    $usuario = auth()->user();
-                    return $usuario && $usuario->hasAnyRole(['admin']);
-                }),
+            TextColumn::make('pertenencia')
+                ->label('Pertenencia')
+                ->formatStateUsing(function ($state, $record) {
+                    return match ($record->pertenencia_tipo) {
+                        'unidad' => UnidadAdministrativa::find($record->pertenece_id)?->nombre ?? '—',
+                        'gerencia' => Gerencia::find($record->pertenece_id)?->nombre ?? '—',
+                        default => '—',
+                    };
+                })
         ];
     }
-
-
 
     public function getTableFilters(): array
     {
@@ -127,6 +112,7 @@ class UserManagementPanel extends Page implements HasTable
                         ->options([
                             'administrador-unidad' => 'Administrador de Unidad',
                             'gerente' => 'Gerente',
+                            'subgerente' => 'Subgerente',
                             'usuario' => 'Usuario',
                         ])
                         ->placeholder('Selecciona un rol'),
@@ -140,7 +126,6 @@ class UserManagementPanel extends Page implements HasTable
                     if (!$data['value']) {
                         return null;
                     }
-
                     return 'Rol: ' . ucfirst($data['value']);
                 }),
         ];
@@ -150,24 +135,23 @@ class UserManagementPanel extends Page implements HasTable
     {
         return [
             Action::make('gestionar')
-
                 ->label(fn(User $record) => match ($record->roles->pluck('name')->first()) {
                     'administrador-unidad' => 'Editar Unidad',
                     'gerente' => 'Editar Gerencia',
+                    'subgerente' => 'Editar Subgerente',
                     'usuario' => 'Editar Usuario',
                     default => 'Gestionar',
                 })
-
                 ->url(function (User $record) {
                     $rol = $record->roles->pluck('name')->first();
                     return match ($rol) {
                         'administrador-unidad' => route('filament.admin.pages.gestionar-unidades', ['user' => $record->id]),
                         'gerente' => route('filament.admin.pages.gestionar-gerentes', ['user' => $record->id]),
+                        'subgerente' => route('filament.admin.pages.gestionar-gerentes', ['user' => $record->id]),
                         'usuario' => route('filament.admin.pages.gestionar-usuarios', ['user' => $record->id]),
                         default => null,
                     };
                 })
-
                 ->icon('heroicon-o-pencil-square')
                 ->extraAttributes(['class' => 'justify-start w-full'])
                 ->visible(fn(User $record) => in_array($record->roles->pluck('name')->first(), ['administrador-unidad', 'gerente', 'subgerente', 'usuario'])),

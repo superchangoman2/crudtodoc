@@ -30,7 +30,7 @@ class GestionarGerentes extends Page implements HasForms
 
         $rolUsuario = $this->user->roles->pluck('name')->first();
 
-        if ($rolUsuario !== 'gerente') {
+        if (!in_array($rolUsuario, ['gerente', 'subgerente'])) {
             redirect()->route('filament.admin.pages.user-management-panel')->send();
         }
 
@@ -38,10 +38,9 @@ class GestionarGerentes extends Page implements HasForms
             'name' => $this->user->name,
             'email' => $this->user->email,
             'role' => $rolUsuario,
-            'gerencia_id' => $this->user->gerencia?->id,
+            'gerencia_id' => $this->user->pertenece_id, // ya no se usa gerencia_id
         ]);
     }
-
     public function getFormSchema(): array
     {
         return [
@@ -91,7 +90,9 @@ class GestionarGerentes extends Page implements HasForms
 
     public function removeKey()
     {
-        Gerencia::where('user_id', $this->user->id)->update(['user_id' => null]);
+        if ($this->user->hasRole(['gerente', 'subgerente'])) {
+            $this->user->update(['pertenece_id' => null]);
+        }
 
         Notification::make()
             ->title('Gerencia desasignada del gerente')
@@ -105,10 +106,8 @@ class GestionarGerentes extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        Gerencia::where('user_id', $this->user->id)->update(['user_id' => null]);
-
-        if ($data['gerencia_id']) {
-            Gerencia::where('id', $data['gerencia_id'])->update(['user_id' => $this->user->id]);
+        if ($this->user->hasRole(['gerente', 'subgerente'])) {
+            $this->user->update(['pertenece_id' => $data['gerencia_id']]);
         }
 
         Notification::make()
@@ -118,7 +117,6 @@ class GestionarGerentes extends Page implements HasForms
 
         return redirect()->route('filament.admin.pages.user-management-panel');
     }
-
     public static function shouldRegisterNavigation(): bool
     {
         return false;

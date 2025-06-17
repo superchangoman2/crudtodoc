@@ -22,12 +22,12 @@ class GestionarUnidades extends Page implements HasForms
     protected static string $view = 'filament.pages.gestionar-unidades';
 
     public $user;
-    public $name, $email, $role;
-    public $unidad_id;
+    public $name, $email, $role, $pertenece_id;
 
     public function mount(): void
     {
         $this->user = User::findOrFail(request()->get('user'));
+
         $rolUsuario = $this->user->roles->pluck('name')->first();
 
         if ($rolUsuario !== 'administrador-unidad') {
@@ -38,7 +38,7 @@ class GestionarUnidades extends Page implements HasForms
             'name' => $this->user->name,
             'email' => $this->user->email,
             'role' => $rolUsuario,
-            'unidad_id' => $this->user->unidad_administrativa_id,
+            'pertenece_id' => $this->user->pertenece_id,
         ]);
     }
 
@@ -61,18 +61,18 @@ class GestionarUnidades extends Page implements HasForms
                 ->disabled()
                 ->dehydrated(false),
 
-            Select::make('unidad_id')
+            Select::make('pertenece_id')
                 ->label('Unidad administrativa asignada')
                 ->options(UnidadAdministrativa::pluck('nombre', 'id'))
                 ->placeholder('Selecciona una unidad')
-                ->nullable(),
+                ->nullable()
+                ->required(),
         ];
     }
 
     public function removeKey()
     {
-        $this->user->unidad_administrativa_id = null;
-        $this->user->save();
+        $this->user->update(['pertenece_id' => null]);
 
         Notification::make()
             ->title('Unidad retirada del administrador')
@@ -86,8 +86,7 @@ class GestionarUnidades extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        $this->user->unidad_administrativa_id = $data['unidad_id'];
-        $this->user->save();
+        $this->user->update(['pertenece_id' => $data['pertenece_id']]);
 
         Notification::make()
             ->title('Administrador actualizado')
@@ -104,6 +103,6 @@ class GestionarUnidades extends Page implements HasForms
 
     public static function canAccess(): bool
     {
-        return Auth::check() && Auth::user()?->hasAnyRole(['admin']);
+        return Auth::check() && Auth::user()?->hasRole('admin');
     }
 }
