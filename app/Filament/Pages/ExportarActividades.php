@@ -31,7 +31,6 @@ class ExportarActividades extends Page implements HasForms
             ->schema(static::makeFormSchema())
             ->statePath('formData');
     }
-
     public function mount(): void
     {
         $mes = now()->month;
@@ -39,28 +38,27 @@ class ExportarActividades extends Page implements HasForms
         $quincenaActual = "$mes-$quincena";
         $mesActual = str_pad($mes, 2, '0', STR_PAD_LEFT);
 
-        // $this->form->fill([
-        //     'incluir_eliminados' => false,
-        //     'propio' => true,
-        //     'unidad_administrativa' => null,
-        //     'gerencia' => null,
-        //     'gerencias_de_unidad' => null,
-        //     'rol_usuario' => null,
-        //     'usuario' => null,
-        //     'modo_fecha' => 'quincena',
-        //     'year' => now()->year,
-        //     'quincena_seleccionada' => $quincenaActual,
-        //     'mes_seleccionado' => $mesActual,
-        //     'fecha_inicio' => now()->startOfMonth()->toDateString(),
-        //     'fecha_fin' => now()->toDateString(),
-        // ]);
+        $rol = auth()->user()->getRoleNames()->first();
+        $pertenenciaId = auth()->user()->pertenece_id;
 
-        $this->form->fill([
+        $unidadId = null;
+        if (in_array($rol, ['gerente', 'subgerente'])) {
+            $unidadId = \DB::table('vista_gerencias_extendida')->where('id', $pertenenciaId)->value('unidad_administrativa_id');
+        }
+
+        $gerenciasIds = null;
+        $unidadConsulta = $rol === 'administrador-unidad' ? $pertenenciaId : $unidadId;
+        if ($unidadConsulta) {
+            $idsString = \DB::table('vista_unidades_extendida')->where('id', $unidadConsulta)->value('gerencias_ids');
+            $gerenciasIds = $idsString ? array_filter(explode(',', $idsString)) : null;
+        }
+
+        $datosIniciales = [
             'incluir_eliminados' => false,
             'propio' => false,
-            'unidad_administrativa' => null,
-            'gerencia' => null,
-            'gerencias_de_unidad' => null,
+            'unidad_administrativa' => $rol === 'administrador-unidad' ? $pertenenciaId : $unidadId,
+            'gerencia' => in_array($rol, ['gerente', 'subgerente']) ? $pertenenciaId : null,
+            'gerencias_de_unidad' => $gerenciasIds,
             'rol_usuario' => null,
             'usuario' => null,
             'modo_fecha' => 'anual',
@@ -69,7 +67,9 @@ class ExportarActividades extends Page implements HasForms
             'mes_seleccionado' => $mesActual,
             'fecha_inicio' => now()->startOfMonth()->toDateString(),
             'fecha_fin' => now()->toDateString(),
-        ]);
+        ];
+
+        $this->form->fill($datosIniciales);
     }
 
     protected static function makeFormSchema(): array
@@ -244,7 +244,7 @@ class ExportarActividades extends Page implements HasForms
                         ->visible(
                             fn($get) =>
                             !$get('propio') &&
-                            auth()->user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente'])
+                            auth()->user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente', 'subgerente'])
                         )
                         ->live(),
 
@@ -314,7 +314,7 @@ class ExportarActividades extends Page implements HasForms
     {
         return [
             Section::make('-Debug-')
-                ->visible(fn($get) => auth()->user()->hasRole(['admin']))
+                // ->visible(fn($get) => auth()->user()->hasRole(['admin']))
                 ->schema([
                     Placeholder::make('debug_toggles')
                         ->label('🟩 Estado de toggles')

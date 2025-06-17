@@ -4,6 +4,9 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Actividad;
+use App\Models\User;
+use App\Models\Gerencia;
+use Illuminate\Support\Carbon;
 
 class ActividadesSeeder extends Seeder
 {
@@ -131,7 +134,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
-                'created_by_role' => 'usuario-unidad',
+                'created_by_role' => 'usuario',
                 'fecha' => '2025-04-17',
             ],
             [
@@ -141,7 +144,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
-                'created_by_role' => 'usuario-unidad',
+                'created_by_role' => 'usuario',
                 'fecha' => '2025-04-19',
             ],
             [
@@ -151,7 +154,7 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
-                'created_by_role' => 'usuario-unidad',
+                'created_by_role' => 'usuario',
                 'fecha' => '2025-04-22',
             ],
             [
@@ -161,15 +164,43 @@ class ActividadesSeeder extends Seeder
                 'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
                 'pertenencia_nombre' => 'Gerencia de Tecnologías de la Información y Comunicación',
                 'user_id' => 5,
-                'created_by_role' => 'usuario-unidad',
+                'created_by_role' => 'usuario',
                 'fecha' => '2025-04-27',
             ],
         ];
+
         foreach ($actividades as $actividad) {
             Actividad::create($actividad);
         }
         foreach ($actividades_ejemplo as $actividad) {
             Actividad::create($actividad);
         }
+
+        for ($i = 0; $i < 300; $i++) {
+            $user = User::inRandomOrder()
+                ->whereBetween('id', [76, 275])
+                ->whereNotNull('pertenece_id')
+                ->first();
+
+            if (!$user)
+                continue;
+
+            $gerencia = Gerencia::find($user->pertenece_id);
+            if (!$gerencia)
+                continue;
+
+            Actividad::create([
+                'titulo' => "{$user->id} - Actividad de prueba #{$i}",
+                'descripcion' => "Descripción de prueba generada automáticamente de {$user->email}.",
+                'tipo_actividad_id' => rand(1, 2),
+                'pertenencia_tipo' => Actividad::TIPO_GERENCIA,
+                'pertenencia_nombre' => $gerencia->nombre,
+                'user_id' => $user->id,
+                'created_by_role' => 'usuario',
+                'fecha' => Carbon::createFromFormat('Y-m-d', '2025-01-01')->addDays(rand(0, 167)), // hasta 17 junio
+            ]);
+        }
+
+
     }
 }

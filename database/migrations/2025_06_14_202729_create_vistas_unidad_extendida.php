@@ -96,7 +96,7 @@ return new class extends Migration {
                         JOIN gerencias g ON g.id = u.pertenece_id
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
-                        WHERE g.unidad_administrativa_id = ua.id AND r.name = "user"
+                        WHERE g.unidad_administrativa_id = ua.id AND r.name = "usuario"
                     ) AS usuarios_user_ids
 
                 FROM unidades_administrativas ua;
@@ -187,7 +187,7 @@ return new class extends Migration {
                         JOIN gerencias g ON g.id = u.pertenece_id AND g.deleted_at IS NULL
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
-                        WHERE g.unidad_administrativa_id = ua.id AND r.name = "user" AND u.deleted_at IS NULL
+                        WHERE g.unidad_administrativa_id = ua.id AND r.name = "usuario" AND u.deleted_at IS NULL
                     ) AS usuarios_user_ids
 
                 FROM unidades_administrativas ua

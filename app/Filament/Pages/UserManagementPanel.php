@@ -96,6 +96,7 @@ class UserManagementPanel extends Page implements HasTable
                             ->orWhere('last_name', 'like', "%{$search}%");
                     });
                 }),
+
             TextColumn::make('email')->label('Correo')->sortable()->searchable(),
             TextColumn::make('roles.name')
                 ->label('Rol')

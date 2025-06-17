@@ -148,8 +148,18 @@ class ActividadResource extends Resource
                 TextColumn::make('user.name')
                     ->label('Nombre completo')
                     ->getStateUsing(fn($record) => $record->user?->name)
-                    ->searchable()
-                    ->sortable(),
+                    ->sortable(query: function ($query, $direction) {
+                        return $query->join('users', 'users.id', '=', 'actividades.user_id')
+                            ->orderBy('users.first_name', $direction)
+                            ->orderBy('users.last_name', $direction)
+                            ->select('actividades.*');
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        return $query->whereHas('user', function ($q) use ($search) {
+                            $q->where('first_name', 'like', "%{$search}%")
+                                ->orWhere('last_name', 'like', "%{$search}%");
+                        });
+                    }),
 
                 TextColumn::make('titulo')
                     ->label('Título')
