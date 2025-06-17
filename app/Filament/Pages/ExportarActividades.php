@@ -119,6 +119,7 @@ class ExportarActividades extends Page implements HasForms
             'admin' => ['administrador-unidad', 'gerente', 'subgerente', 'usuario'],
             'administrador-unidad' => ['gerente', 'subgerente', 'usuario'],
             'gerente' => ['subgerente', 'usuario'],
+            'subgerente' => ['usuario'],
             default => [],
         };
 
