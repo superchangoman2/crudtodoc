@@ -26,7 +26,8 @@ class GestionarUsuarios extends Page implements HasForms
     public function mount(): void
     {
         $this->user = User::findOrFail(request()->get('user'));
-        $rolUsuario = $this->user->roles->pluck('name')->first();
+
+        $rolUsuario = $this->user->getRoleNames()->first();
 
         if ($rolUsuario !== 'usuario') {
             redirect()->route('filament.admin.pages.user-management-panel')->send();
@@ -35,7 +36,7 @@ class GestionarUsuarios extends Page implements HasForms
         $this->form->fill([
             'name' => $this->user->name,
             'email' => $this->user->email,
-            'role' => 'usuario',
+            'role' => $rolUsuario,
             'pertenece_id' => $this->user->pertenece_id,
         ]);
     }
@@ -69,17 +70,16 @@ class GestionarUsuarios extends Page implements HasForms
                     }
 
                     if ($user->hasRole('administrador-unidad')) {
-                        $unidadId = $user->pertenece_id;
-                        return Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('nombre', 'id');
+                        return Gerencia::where('unidad_administrativa_id', $user->pertenece_id)->pluck('nombre', 'id');
                     }
 
-                    if ($user->hasRole(['gerente'])) {
-                        $gerencia = $user->gerenciaQueDirige;
-                        return $gerencia ? [$gerencia->id => $gerencia->nombre] : [];
+                    if ($user->hasRole('gerente')) {
+                        return Gerencia::where('id', $user->pertenece_id)->pluck('nombre', 'id');
                     }
 
                     return [];
                 })
+                ->rules(['exists:gerencias,id'])
                 ->placeholder('Selecciona una gerencia')
                 ->nullable()
                 ->required(),
@@ -100,11 +100,13 @@ class GestionarUsuarios extends Page implements HasForms
 
     public function submit()
     {
+        if ($this->user->getRoleNames()->first() !== 'usuario') {
+            abort(403);
+        }
+
         $data = $this->form->getState();
 
-        $this->user->update([
-            'pertenece_id' => $data['pertenece_id'],
-        ]);
+        $this->user->update(['pertenece_id' => $data['pertenece_id']]);
 
         Notification::make()
             ->title('Usuario actualizado')
