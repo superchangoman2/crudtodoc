@@ -17,6 +17,9 @@ return new class extends Migration {
             $table->softDeletes();
             $table->foreignId('deleted_by')->nullable()->constrained('users');
             $table->timestamps();
+            $table->string('created_by_role')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
         });
     }
     public function down(): void

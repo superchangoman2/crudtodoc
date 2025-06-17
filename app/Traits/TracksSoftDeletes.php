@@ -26,3 +26,7 @@ trait TracksSoftDeletes
         return $this->belongsTo(\App\Models\User::class, 'deleted_by');
     }
 }
+
+// Necesita en la migración
+// $table->softDeletes(); //para que exista el soft delete
+// $table->foreignId('deleted_by')->nullable()->constrained('users');

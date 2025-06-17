@@ -7,12 +7,12 @@ return new class extends Migration {
     public function up(): void
     {
         // down() no funciona con vistas, entonces eliminamos la vista en up()
-        DB::unprepared('DROP VIEW IF EXISTS vista_gerencias_extendida');
-        DB::unprepared('DROP VIEW IF EXISTS vista_unidades_extendida');
+        DB::unprepared('DROP VIEW IF EXISTS vista_gerencias_extendida_admin');
+        DB::unprepared('DROP VIEW IF EXISTS vista_unidades_extendida_admin');
 
         // Y las creamos nuevamente
         DB::unprepared('
-            CREATE VIEW vista_gerencias_extendida AS
+            CREATE VIEW vista_gerencias_extendida_admin AS
                 SELECT
                     g.id,
                     g.nombre,
@@ -23,9 +23,7 @@ return new class extends Migration {
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
-                        WHERE u.pertenece_id = g.id
-                          AND r.name = "gerente"
-                          AND u.deleted_at IS NULL
+                        WHERE u.pertenece_id = g.id AND r.name = "gerente"
                         ORDER BY u.id
                         LIMIT 1
                     ) AS gerente_id,
@@ -35,9 +33,7 @@ return new class extends Migration {
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
-                        WHERE u.pertenece_id = g.id
-                          AND r.name = "subgerente"
-                          AND u.deleted_at IS NULL
+                        WHERE u.pertenece_id = g.id AND r.name = "subgerente"
                         ORDER BY u.id
                         LIMIT 1
                     ) AS subgerente_id,
@@ -47,16 +43,15 @@ return new class extends Migration {
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
-                        WHERE u.pertenece_id = g.id
-                          AND r.name IN ("admin", "gerente", "subgerente", "user")
-                          AND u.deleted_at IS NULL
+                        WHERE u.pertenece_id = g.id AND r.name IN ("admin", "gerente", "subgerente", "user")
                     ) AS usuarios_ids
 
                 FROM gerencias g;
         ');
 
+        // Vista de unidades que incluye usuarios eliminados (soft deleted)
         DB::unprepared('
-            CREATE VIEW vista_unidades_extendida AS
+            CREATE VIEW vista_unidades_extendida_admin AS
                 SELECT
                     ua.id,
                     ua.nombre,
@@ -66,9 +61,7 @@ return new class extends Migration {
                         FROM users u
                         JOIN model_has_roles mr ON mr.model_id = u.id
                         JOIN roles r ON r.id = mr.role_id
-                        WHERE u.pertenece_id = ua.id
-                          AND r.name = "administrador-unidad"
-                          AND u.deleted_at IS NULL
+                        WHERE u.pertenece_id = ua.id AND r.name = "administrador-unidad"
                         ORDER BY u.id
                         LIMIT 1
                     ) AS administrador_id,
@@ -91,5 +84,7 @@ return new class extends Migration {
 
     public function down(): void
     {
+        DB::unprepared('DROP VIEW IF EXISTS vista_gerencias_extendida_admin');
+        DB::unprepared('DROP VIEW IF EXISTS vista_unidades_extendida_admin');
     }
 };
