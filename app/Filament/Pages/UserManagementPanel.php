@@ -159,6 +159,29 @@ class UserManagementPanel extends Page implements HasTable
                 ->sortable()
                 ->searchable()
                 ->formatStateUsing(fn($state) => ucfirst($state)),
+
+            TextColumn::make('pertenencia')
+                ->label('Pertenencia')
+                ->getStateUsing(function (User $record) {
+                    if (!$record->pertenece_id) {
+                        return '-';
+                    }
+
+                    $rol = $record->getRoleNames()->first();
+
+                    if ($rol === 'administrador-unidad') {
+                        $unidad = DB::table('vista_unidades_extendida')->where('id', $record->pertenece_id)->first();
+                        return $unidad?->nombre ?? '-';
+                    }
+
+                    if (in_array($rol, ['admin', 'gerente', 'subgerente', 'usuario'])) {
+                        $gerencia = DB::table('vista_gerencias_extendida')->where('id', $record->pertenece_id)->first();
+                        return $gerencia?->nombre ?? '-';
+                    }
+
+                    return '-';
+                })
+                ->sortable(),
         ];
     }
 
