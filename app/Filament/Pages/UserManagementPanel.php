@@ -158,7 +158,10 @@ class UserManagementPanel extends Page implements HasTable
                 ->label('Rol')
                 ->sortable()
                 ->searchable()
-                ->formatStateUsing(fn($state) => ucfirst($state)),
+                ->formatStateUsing(fn($state) => match ($state) {
+                    'administrador-unidad' => 'Admin. Unidad',
+                    default => ucfirst($state),
+                }),
 
             TextColumn::make('pertenencia')
                 ->label('Pertenencia')
