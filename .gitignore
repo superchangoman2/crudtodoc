@@ -65,6 +65,3 @@ docker-compose.override.yml
 .idea/
 *.sublime-workspace
 *.sublime-project
-
-# Modelos que generas dinámicamente
-app/Models/User.php
