@@ -315,7 +315,7 @@ class ExportarActividades extends Page implements HasForms
     {
         return [
             Section::make('-Debug-')
-                // ->visible(fn($get) => auth()->user()->hasRole(['admin']))
+                ->visible(fn($get) => auth()->user()->hasRole(['admin']))
                 ->schema([
                     Placeholder::make('debug_toggles')
                         ->label('🟩 Estado de toggles')
