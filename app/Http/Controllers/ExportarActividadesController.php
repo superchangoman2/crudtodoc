@@ -34,9 +34,14 @@ class ExportarActividadesController extends Controller
 
         $isPropio = !empty($data['propio']) && $data['propio'] === '1';
 
-        if (!$isPropio && !empty($pertenenciasPermitidas)) {
-            $query->whereIn('pertenencia_nombre', $pertenenciasPermitidas);
+        $pertenenciasPermitidasIds = $this->obtenerPertenenciasPermitidasIds($data);
+
+        if (!$isPropio && !empty($pertenenciasPermitidasIds)) {
+            $query->whereHas('user', function ($q) use ($pertenenciasPermitidasIds) {
+                $q->whereIn('pertenece_id', $pertenenciasPermitidasIds);
+            });
         }
+
 
         $this->aplicarFiltrosJerarquia($query, $data, $rolActual, $jerarquia);
 
@@ -140,7 +145,10 @@ class ExportarActividadesController extends Controller
                 ->keys()
                 ->toArray();
 
-            $query->whereIn('created_by_role', $rolesVisibles);
+            $query->whereHas('user.roles', function ($q) use ($rolesVisibles) {
+                $q->whereIn('name', $rolesVisibles);
+            });
+
         }
     }
 
@@ -152,15 +160,25 @@ class ExportarActividadesController extends Controller
             case 'quincena':
                 if (!empty($data['quincena_seleccionada']) && !empty($data['year'])) {
                     [$mes, $q] = explode('-', $data['quincena_seleccionada']);
-                    $inicio = date("Y-{$mes}-" . ($q == '1' ? '01' : '16'));
-                    $fin = date("Y-{$mes}-" . ($q == '1' ? '15' : date("t", strtotime($inicio))));
-                    $query->whereBetween('fecha', ["{$data['year']}-" . substr($inicio, 5), "{$data['year']}-" . substr($fin, 5)]);
+                    $mes = (int)$mes;
 
-                    $mesNombre = Carbon::createFromDate($data['year'], $mes, 1)->translatedFormat('F');
-                    $quincenaTexto = $q == '1' ? 'Primera quincena de' : 'Segunda quincena de';
+                    if ((int)$q === 1) {
+                        $inicio = Carbon::create($data['year'], $mes, 1)->startOfDay();
+                        $fin    = Carbon::create($data['year'], $mes, 15)->endOfDay();
+                        $quincenaTexto = 'Primera quincena de';
+                    } else {
+                        $inicio = Carbon::create($data['year'], $mes, 16)->startOfDay();
+                        $fin    = Carbon::create($data['year'], $mes, 1)->endOfMonth()->endOfDay();
+                        $quincenaTexto = 'Segunda quincena de';
+                    }
+
+                    $query->whereBetween('fecha', [$inicio->toDateString(), $fin->toDateString()]);
+
+                    $mesNombre = $inicio->translatedFormat('F');
                     $rangoFechas = "$quincenaTexto $mesNombre {$data['year']}";
                 }
                 break;
+
             case 'mes':
                 if (!empty($data['mes_seleccionado']) && !empty($data['year'])) {
                     $inicio = "{$data['year']}-{$data['mes_seleccionado']}-01";
@@ -200,4 +218,24 @@ class ExportarActividadesController extends Controller
 
         return $titulo;
     }
+
+    private function obtenerPertenenciasPermitidasIds(array $data): array
+    {
+        $ids = [];
+
+        if (!empty($data['unidad_administrativa'])) {
+            $ids[] = (int) $data['unidad_administrativa'];
+        }
+
+        if (!empty($data['gerencias_de_unidad'])) {
+            $ids = array_merge($ids, Gerencia::whereIn('id', $data['gerencias_de_unidad'])->pluck('id')->toArray());
+        }
+
+        if (!empty($data['gerencia'])) {
+            $ids = [(int) $data['gerencia']];
+        }
+
+        return array_values(array_unique(array_map('intval', $ids)));
+    }
+
 }
