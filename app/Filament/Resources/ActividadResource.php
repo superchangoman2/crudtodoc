@@ -20,6 +20,9 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Filters\{Filter, SelectFilter};
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
+
+use Illuminate\Support\Carbon;
 
 use Illuminate\Database\Eloquent\Builder;
 
@@ -136,8 +139,27 @@ class ActividadResource extends Resource
 
                 DatePicker::make('fecha')
                     ->label('Fecha')
+                    ->maxDate(Carbon::today())
                     ->required()
-                    ->default(today()),
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if (blank($state)) {
+                            return;
+                        }
+
+                        $sel = Carbon::parse($state);
+
+                        if ($sel->isFuture()) {
+
+                            $set('fecha', Carbon::today()->toDateString());
+
+                            Notification::make()
+                                ->title('La fecha no puede ser futura')
+                                ->body('Selecciona una fecha igual o anterior a hoy.')
+                                ->danger()
+                                ->send();
+                        }
+                    })
             ]);
     }
 
