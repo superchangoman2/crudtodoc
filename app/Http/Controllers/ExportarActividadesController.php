@@ -134,8 +134,19 @@ class ExportarActividadesController extends Controller
 
     private function aplicarFiltrosJerarquia($query, array $data, string $rolActual, array $jerarquia): void
     {
+        if (!empty($data['usuario'])) {
+            if (!empty($data['rol_usuario'])) {
+                $query->whereHas('user.roles', function ($q) use ($data) {
+                    $q->where('name', $data['rol_usuario']);
+                });
+            }
+            return;
+        }
+
         if (!empty($data['rol_usuario'])) {
-            $query->where('created_by_role', $data['rol_usuario']);
+            $query->whereHas('user.roles', function ($q) use ($data) {
+                $q->where('name', $data['rol_usuario']);
+            });
             return;
         }
 
@@ -148,7 +159,6 @@ class ExportarActividadesController extends Controller
             $query->whereHas('user.roles', function ($q) use ($rolesVisibles) {
                 $q->whereIn('name', $rolesVisibles);
             });
-
         }
     }
 
