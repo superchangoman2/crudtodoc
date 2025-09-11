@@ -188,8 +188,8 @@ class ExportarActividades extends Page implements HasForms
                             $rolUsuario = auth()->user()->getRoleNames()->first();
                             $unidadId = $get('unidad_administrativa');
                             $unidadNombre = $get('unidad_administrativa_nombre');
-                            $gerencia = $get('gerencia'); // id
-                            $gerenciaNombre = $get('gerencia_nombre'); // nombre
+                            $gerencia = $get('gerencia');
+                            $gerenciaNombre = $get('gerencia_nombre');
                             $gerenciasDeUnidadIds = array_filter($get('gerencias_de_unidad') ?? []);
 
                             $query = User::query();
@@ -361,7 +361,8 @@ class ExportarActividades extends Page implements HasForms
                 ->label('Generar PDF')
                 ->color('primary')
                 ->icon('heroicon-o-printer')
-                ->action('exportar'),
+                ->url(fn () => url('/exportar-pdf') . '?' . http_build_query($this->formData))
+                ->openUrlInNewTab(),
         ];
     }
     public function exportar()

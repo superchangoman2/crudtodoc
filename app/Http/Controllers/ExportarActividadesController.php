@@ -91,10 +91,17 @@ class ExportarActividadesController extends Controller
         }
 
         if (!empty($data['unidad_administrativa'])) {
-            $gerencias = Gerencia::whereIn('id', $data['gerencias_de_unidad'] ?? [])->pluck('id');
-            return User::where(function ($q) use ($data, $gerencias) {
-                $q->where('pertenece_id', $data['unidad_administrativa'])
-                    ->orWhereIn('pertenece_id', $gerencias);
+            $unidadId = (int) $data['unidad_administrativa'];
+            $gerencias = Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('id');
+
+            return User::where(function ($q) use ($unidadId, $gerencias) {
+                $q->where(function ($q1) use ($unidadId) {
+                    $q1->where('pertenece_id', $unidadId)
+                    ->whereHas('roles', fn($r) => $r->where('name', 'administrador-unidad'));
+                })->orWhere(function ($q2) use ($gerencias) {
+                    $q2->whereIn('pertenece_id', $gerencias)
+                    ->whereHas('roles', fn($r) => $r->whereIn('name', ['gerente', 'subgerente', 'usuario']));
+                });
             })->pluck('id')->toArray();
         }
 
@@ -233,19 +240,31 @@ class ExportarActividadesController extends Controller
     {
         $ids = [];
 
+        if (!empty($data['gerencia'])) {
+            return [(int) $data['gerencia']];
+        }
+
         if (!empty($data['unidad_administrativa'])) {
-            $ids[] = (int) $data['unidad_administrativa'];
+            $unidadId = (int) $data['unidad_administrativa'];
+
+            $ids[] = $unidadId;
+            $ids = array_merge(
+                $ids,
+                Gerencia::where('unidad_administrativa_id', $unidadId)->pluck('id')->toArray()
+            );
+
+            return array_values(array_unique(array_map('intval', $ids)));
         }
 
         if (!empty($data['gerencias_de_unidad'])) {
-            $ids = array_merge($ids, Gerencia::whereIn('id', $data['gerencias_de_unidad'])->pluck('id')->toArray());
-        }
-
-        if (!empty($data['gerencia'])) {
-            $ids = [(int) $data['gerencia']];
+            $ids = array_merge(
+                $ids,
+                Gerencia::whereIn('id', $data['gerencias_de_unidad'])->pluck('id')->toArray()
+            );
         }
 
         return array_values(array_unique(array_map('intval', $ids)));
     }
+
 
 }
