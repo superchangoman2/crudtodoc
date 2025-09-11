@@ -61,7 +61,7 @@ class ExportarActividades extends Page implements HasForms
             'gerencias_de_unidad' => $gerenciasIds,
             'rol_usuario' => null,
             'usuario' => null,
-            'modo_fecha' => 'quincenal',
+            'modo_fecha' => 'quincena',
             'year' => now()->year,
             'quincena_seleccionada' => $quincenaActual,
             'mes_seleccionado' => $mesActual,
@@ -286,27 +286,32 @@ class ExportarActividades extends Page implements HasForms
                         ->numeric()
                         ->minValue(2000)
                         ->maxValue(now()->year)
-                        ->visible(fn($get) => in_array($get('modo_fecha'), ['quincena', 'mes', 'anual'])),
+                        ->visible(fn($get) => in_array($get('modo_fecha'), ['quincena', 'mes', 'anual']))
+                        ->live(),
 
                     Select::make('quincena_seleccionada')
-                        ->label('Selecciona una quincena')
-                        ->options($quincenas)
-                        ->visible(fn($get) => $get('modo_fecha') === 'quincena'),
+                    ->label('Selecciona una quincena')
+                    ->options($quincenas)
+                    ->visible(fn($get) => $get('modo_fecha') === 'quincena')
+                    ->live(),
 
                     Select::make('mes_seleccionado')
                         ->label('Selecciona un mes')
                         ->options($meses)
-                        ->visible(fn($get) => $get('modo_fecha') === 'mes'),
+                        ->visible(fn($get) => $get('modo_fecha') === 'mes')
+                        ->live(),
 
                     DatePicker::make('fecha_inicio')
                         ->label('Desde')
                         ->default(now()->startOfMonth())
-                        ->visible(fn($get) => $get('modo_fecha') === 'personalizado'),
+                        ->visible(fn($get) => $get('modo_fecha') === 'personalizado')
+                        ->live(),
 
                     DatePicker::make('fecha_fin')
                         ->label('Hasta')
                         ->default(now())
-                        ->visible(fn($get) => $get('modo_fecha') === 'personalizado'),
+                        ->visible(fn($get) => $get('modo_fecha') === 'personalizado')
+                        ->live(),
                 ]),
         ];
     }
@@ -357,14 +362,19 @@ class ExportarActividades extends Page implements HasForms
     public function getExportActions(): array
     {
         return [
-            Action::make('exportar')
-                ->label('Generar PDF')
+            Action::make('exportar_pdf')
+                ->label('Exportar PDF')
                 ->color('primary')
                 ->icon('heroicon-o-printer')
-                ->url(fn () => url('/exportar-pdf') . '?' . http_build_query($this->formData))
+                ->url(function () {
+                    $state  = $this->form->getState();
+                    $params = $this->paramsNormalizados($state);
+                    return url('/exportar-pdf') . '?' . http_build_query($params);
+                })
                 ->openUrlInNewTab(),
         ];
     }
+
     public function exportar()
     {
         $data = $this->formData;
@@ -397,6 +407,42 @@ class ExportarActividades extends Page implements HasForms
         $params = http_build_query(array_filter($data));
         return redirect()->to('/exportar-pdf?' . $params);
     }
+
+    private function paramsNormalizados(array $data): array
+    {
+        switch ($data['modo_fecha'] ?? null) {
+            case 'quincena':
+                $data['mes_seleccionado'] = null;
+                $data['fecha_inicio']     = null;
+                $data['fecha_fin']        = null;
+                break;
+            case 'mes':
+                $data['quincena_seleccionada'] = null;
+                $data['fecha_inicio']          = null;
+                $data['fecha_fin']             = null;
+                break;
+            case 'anual':
+                $data['quincena_seleccionada'] = null;
+                $data['mes_seleccionado']      = null;
+                $data['fecha_inicio']          = null;
+                $data['fecha_fin']             = null;
+                break;
+            case 'personalizado':
+                $data['quincena_seleccionada'] = null;
+                $data['mes_seleccionado']      = null;
+                $data['year']                  = null;
+                break;
+        }
+
+        return array_filter($data, function ($v) {
+            if (is_array($v)) {
+                return count(array_filter($v, fn($x) => $x !== null && $x !== '')) > 0;
+            }
+            return $v !== null && $v !== '' && $v !== false;
+        });
+    }
+
+
 }
 
 
