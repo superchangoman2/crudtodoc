@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->string('created_by_role')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->tinyInteger('autorizado')->default(1);
         });
     }
 

@@ -17,6 +17,7 @@ use Filament\Tables\Actions\{
     RestoreAction,
 };
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Enums\ActionsPosition;
 use Filament\Tables\Filters\{Filter, SelectFilter};
 use Filament\Tables\Table;
@@ -167,6 +168,18 @@ class ActividadResource extends Resource
     {
         return $table
             ->columns([
+            ToggleColumn::make('autorizado')
+                ->label('Aut.')
+                ->alignCenter()
+                ->disabled(fn () => ! auth()->user()?->hasAnyRole(['gerente', 'administrador-unidad', 'admin']))
+                ->visible(function ($record) {
+                    if (! $record) return true;
+                    if (! method_exists($record, 'trashed')) return true;
+                    return ! $record->trashed();
+                })
+                ->afterStateUpdated(function (bool $state, $record) {
+                    // Auditar...
+                }),
                 TextColumn::make('user.name')
                     ->label('Nombre completo')
                     ->getStateUsing(fn($record) => $record->user?->name)
@@ -251,11 +264,12 @@ class ActividadResource extends Resource
                 EditAction::make(),
                 DeleteAction::make(),
 
-                RestoreAction::make()
-                    ->visible(fn($record) => auth()->user()?->hasRole('admin') && $record->trashed()),
+            RestoreAction::make()
+                ->visible(fn ($record) => auth()->user()?->hasRole('admin') && ($record?->trashed() ?? false)),
 
-                ForceDeleteAction::make()
-                    ->visible(fn($record) => auth()->user()?->hasRole('admin') && $record->trashed()),
+            ForceDeleteAction::make()
+                ->visible(fn ($record) => auth()->user()?->hasRole('admin') && ($record?->trashed() ?? false)),
+
             ], position: ActionsPosition::BeforeColumns)
             ->headerActions([
                 Action::make('exportar')

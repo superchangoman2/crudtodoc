@@ -26,6 +26,7 @@ class Actividad extends Model
         'tipo_actividad_id',
         'pertenencia_nombre',
         'pertenencia_tipo',
+        'autorizado',
     ];
 
     protected $table = 'actividades';

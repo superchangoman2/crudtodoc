@@ -15,13 +15,11 @@ class ExportarActividadesController extends Controller
         Carbon::setLocale('es');
         $data = $request->all();
 
-        $usuario = auth()->user();
+        $usuario   = auth()->user();
         $rolActual = $usuario->getRoleNames()->first();
         $jerarquia = User::jerarquiaRoles();
 
         $usuariosPermitidos = $this->obtenerUsuariosPermitidos($data, $usuario, $rolActual);
-        $pertenenciasPermitidas = $this->obtenerPertenenciasPermitidas($data);
-
         $query = Actividad::query();
 
         if ($rolActual === 'admin' && !empty($data['incluir_eliminados']) && $data['incluir_eliminados'] === '1') {
@@ -33,31 +31,34 @@ class ExportarActividadesController extends Controller
         }
 
         $isPropio = !empty($data['propio']) && $data['propio'] === '1';
+        $esUsuarioEspecifico = !empty($data['usuario']);
 
         $pertenenciasPermitidasIds = $this->obtenerPertenenciasPermitidasIds($data);
-
         if (!$isPropio && !empty($pertenenciasPermitidasIds)) {
             $query->whereHas('user', function ($q) use ($pertenenciasPermitidasIds) {
                 $q->whereIn('pertenece_id', $pertenenciasPermitidasIds);
             });
         }
 
-
         $this->aplicarFiltrosJerarquia($query, $data, $rolActual, $jerarquia);
+
+        if (!($isPropio || $esUsuarioEspecifico)) {
+            $query->where('autorizado', true);
+        }
 
         $rangoFechas = $this->aplicarFiltroFechas($query, $data);
 
         $actividades = $query->with('user')->orderBy('fecha')->get();
 
-        $usuarios = $actividades->pluck('user')->unique('id');
-        $autorUnico = $usuarios->count() === 1 ? $usuarios->first()->name : null;
-
-        $titulo = $this->generarTitulo($data['modo_fecha'] ?? null, $autorUnico);
+        $usuarios   = $actividades->pluck('user')->unique('id');
+        $autorUnico = $usuarios->count() === 1 ? optional($usuarios->first())->name : null;
+        $titulo     = $this->generarTitulo($data['modo_fecha'] ?? null, $autorUnico);
 
         return Pdf::loadView('filament.pages.actividades-pdf', compact('actividades', 'titulo', 'rangoFechas', 'autorUnico'))
             ->setPaper('letter', 'landscape')
             ->stream('reporte-actividades.pdf');
     }
+
 
     private function obtenerUsuariosPermitidos(array $data, $usuario, string $rolActual): array
     {
