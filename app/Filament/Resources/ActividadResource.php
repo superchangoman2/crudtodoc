@@ -218,15 +218,30 @@ class ActividadResource extends Resource
                     ->searchable(),
             ])
             ->filters([
-                Filter::make('created_at')
+                Filter::make('rango_fecha')
                     ->form([
-                        DatePicker::make('from')->label('Desde'),
-                        DatePicker::make('until')->label('Hasta'),
+                        DatePicker::make('from')
+                            ->label('Desde'),
+                        DatePicker::make('until')
+                            ->label('Hasta'),
                     ])
-                    ->query(function ($query, array $data) {
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+                        if (!empty($data['from'])) {
+                            $indicators[] = 'Desde: '.\Illuminate\Support\Carbon::parse($data['from'])->format('d/m/Y');
+                        }
+                        if (!empty($data['until'])) {
+                            $indicators[] = 'Hasta: '.\Illuminate\Support\Carbon::parse($data['until'])->format('d/m/Y');
+                        }
+                        return $indicators;
+                    })
+                    ->query(function (Builder $query, array $data) {
+                        $from  = !empty($data['from'])  ? \Illuminate\Support\Carbon::parse($data['from'])->startOfDay() : null;
+                        $until = !empty($data['until']) ? \Illuminate\Support\Carbon::parse($data['until'])->endOfDay()   : null;
+
                         return $query
-                            ->when($data['from'], fn($q) => $q->whereDate('created_at', '>=', $data['from']))
-                            ->when($data['until'], fn($q) => $q->whereDate('created_at', '<=', $data['until']));
+                            ->when($from,  fn ($q) => $q->where('fecha', '>=', $from->toDateString()))
+                            ->when($until, fn ($q) => $q->where('fecha', '<=', $until->toDateString()));
                     }),
 
                 Filter::make('trashed')
@@ -236,19 +251,21 @@ class ActividadResource extends Resource
                         Select::make('estado')
                             ->label('Mostrar')
                             ->options([
-                                'activos' => 'Solo activos',
+                                'activos'    => 'Solo activos',
                                 'eliminados' => 'Solo eliminados',
-                                'todos' => 'Todos',
+                                'todos'      => 'Todos',
                             ])
                             ->default('activos'),
                     ])
                     ->query(function (Builder $query, array $data) {
                         return match ($data['estado'] ?? 'activos') {
                             'eliminados' => $query->onlyTrashed(),
-                            'todos' => $query->withTrashed(),
-                            default => $query->withoutTrashed(),
+                            'todos'      => $query->withTrashed(),
+                            default      => $query->withoutTrashed(),
                         };
                     }),
+
+                // Filtro "Solo mis actividades"
                 Filter::make('propias')
                     ->label('Solo mis actividades')
                     ->default(true)
