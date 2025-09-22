@@ -7,57 +7,157 @@ use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpWord\TemplateProcessor;
 
 class ExportarActividadesController extends Controller
 {
-    public function export(Request $request)
-    {
-        Carbon::setLocale('es');
-        $data = $request->all();
+public function exportPdf(Request $request)
+{
+    $data = $this->buildExport($request);
 
-        $usuario   = auth()->user();
-        $rolActual = $usuario->getRoleNames()->first();
-        $jerarquia = User::jerarquiaRoles();
+    $actividades = $data['query']
+        ->with(['user' => function ($q) {
+            if (in_array('Illuminate\\Database\\Eloquent\\SoftDeletes', class_uses(\App\Models\User::class))) {
+                $q->withTrashed();
+            }
+        }])
+        ->orderBy('fecha')
+        ->get();
 
-        $usuariosPermitidos = $this->obtenerUsuariosPermitidos($data, $usuario, $rolActual);
-        $query = Actividad::query();
+    $usuarios   = $actividades->pluck('user')->filter()->unique('id');
+    $autorUnico = $usuarios->count() === 1 ? optional($usuarios->first())->name : null;
+    $titulo     = $this->generarTitulo($data['modo_fecha'], $autorUnico);
 
-        if ($rolActual === 'admin' && !empty($data['incluir_eliminados']) && $data['incluir_eliminados'] === '1') {
-            $query->withTrashed();
-        }
+    return Pdf::loadView('filament.pages.actividades-pdf', [
+        'actividades' => $actividades,
+        'titulo'      => $titulo,
+        'rangoFechas' => $data['rangoFechas'],
+        'autorUnico'  => $autorUnico,
+    ])
+        ->setPaper('letter', 'landscape')
+        ->stream('reporte-actividades.pdf');
+}
 
-        if (!empty($usuariosPermitidos)) {
-            $query->whereIn('user_id', $usuariosPermitidos);
-        }
+private function buildExport(Request $request): array
+{
+    Carbon::setLocale('es');
+    $data = $request->all();
 
-        $isPropio = !empty($data['propio']) && $data['propio'] === '1';
-        $esUsuarioEspecifico = !empty($data['usuario']);
+    $usuario   = auth()->user();
+    $rolActual = $usuario->getRoleNames()->first();
+    $jerarquia = User::jerarquiaRoles();
 
-        $pertenenciasPermitidasIds = $this->obtenerPertenenciasPermitidasIds($data);
-        if (!$isPropio && !empty($pertenenciasPermitidasIds)) {
-            $query->whereHas('user', function ($q) use ($pertenenciasPermitidasIds) {
-                $q->whereIn('pertenece_id', $pertenenciasPermitidasIds);
-            });
-        }
+    $usuariosPermitidos    = $this->obtenerUsuariosPermitidos($data, $usuario, $rolActual);
+    $pertenenciasPermitidas = $this->obtenerPertenenciasPermitidas($data);
 
-        $this->aplicarFiltrosJerarquia($query, $data, $rolActual, $jerarquia);
+    $query = Actividad::query();
 
-        if (!($isPropio || $esUsuarioEspecifico)) {
-            $query->where('autorizado', true);
-        }
-
-        $rangoFechas = $this->aplicarFiltroFechas($query, $data);
-
-        $actividades = $query->with('user')->orderBy('fecha')->get();
-
-        $usuarios   = $actividades->pluck('user')->unique('id');
-        $autorUnico = $usuarios->count() === 1 ? optional($usuarios->first())->name : null;
-        $titulo     = $this->generarTitulo($data['modo_fecha'] ?? null, $autorUnico);
-
-        return Pdf::loadView('filament.pages.actividades-pdf', compact('actividades', 'titulo', 'rangoFechas', 'autorUnico'))
-            ->setPaper('letter', 'landscape')
-            ->stream('reporte-actividades.pdf');
+    if ($rolActual === 'admin' && !empty($data['incluir_eliminados']) && $data['incluir_eliminados'] === '1') {
+        $query->withTrashed();
     }
+
+    if (!empty($usuariosPermitidos)) {
+        $query->whereIn('user_id', $usuariosPermitidos);
+    }
+
+    $isPropio             = !empty($data['propio']) && $data['propio'] === '1';
+    $esUsuarioEspecifico  = !empty($data['usuario']);
+
+    if (!$isPropio && !empty($pertenenciasPermitidas)) {
+        $query->whereIn('pertenencia_nombre', $pertenenciasPermitidas);
+    }
+
+    if (!($isPropio || $esUsuarioEspecifico)) {
+        $query->where('autorizado', true);
+    }
+
+    $this->aplicarFiltrosJerarquia($query, $data, $rolActual, $jerarquia);
+
+    // Fechas
+    $rangoFechas = $this->aplicarFiltroFechas($query, $data);
+
+    return [
+        'query'       => $query,
+        'modo_fecha'  => $data['modo_fecha'] ?? null,
+        'rangoFechas' => $rangoFechas,
+    ];
+}
+
+public function exportDoc(Request $request)
+{
+    $data = $this->buildExport($request);
+
+    $actividades = $data['query']
+        ->with(['user' => function ($q) {
+            if (in_array('Illuminate\\Database\\Eloquent\\SoftDeletes', class_uses(\App\Models\User::class))) {
+                $q->withTrashed();
+            }
+        }])
+        ->orderBy('fecha')
+        ->get();
+
+    $usuarios   = $actividades->pluck('user')->filter()->unique('id');
+    $autorUnico = $usuarios->count() === 1 ? optional($usuarios->first())->name : null;
+    $titulo     = $this->generarTitulo($data['modo_fecha'], $autorUnico);
+
+    $templateSingle   = resource_path('docs/actividades_single.docx');
+    $templateMultiple = resource_path('docs/actividades_multiple.docx');
+    $templatePath     = $autorUnico ? $templateSingle : $templateMultiple;
+
+    if (!file_exists($templatePath)) {
+        abort(404, 'No se encontró el template: ' . $templatePath);
+    }
+
+    $tp = new TemplateProcessor($templatePath);
+
+    $tp->setValue('titulo', e($titulo));
+    $tp->setValue('rango', e($data['rangoFechas'] ?? ''));
+
+    if ($autorUnico) {
+        $rows = $actividades->map(function ($a) {
+            return [
+                'pertenencia'            => $a->pertenencia_nombre ?? '',
+                'tipo'                   => ($a->tipo_actividad_id ?? null) == 1 ? 'Sustantiva' : 'Cotidiana',
+                'actividad_titulo'      => $a->titulo ?? '',
+                'actividad_descripcion' => $a->descripcion ?? '',
+                'fecha'                  => \Carbon\Carbon::parse($a->fecha)->format('d/m/Y'),
+            ];
+        })->all();
+
+        if (count($rows) > 0) {
+            $tp->cloneRowAndSetValues('pertenencia', $rows);
+        } else {
+            $tp->cloneRow('pertenencia', 0);
+        }
+    } else {
+        // CON columna Usuario → placeholders: usuario, pertenencia, tipo, actividad_titulo, actividad_descripcion, fecha
+        $rows = $actividades->map(function ($a) {
+            return [
+                'usuario'                => optional($a->user)->name ?? 'Sin usuario',
+                'pertenencia'            => $a->pertenencia_nombre ?? '',
+                'tipo'                   => ($a->tipo_actividad_id ?? null) == 1 ? 'Sustantiva' : 'Cotidiana',
+                'actividad_titulo'      => $a->titulo ?? '',
+                'actividad_descripcion' => $a->descripcion ?? '',
+                'fecha'                  => \Carbon\Carbon::parse($a->fecha)->format('d/m/Y'),
+            ];
+        })->all();
+
+        if (count($rows) > 0) {
+            $tp->cloneRowAndSetValues('usuario', $rows);
+        } else {
+            $tp->cloneRow('usuario', 0);
+        }
+    }
+
+    $tmp = tempnam(sys_get_temp_dir(), 'docx');
+    $tp->saveAs($tmp);
+
+    return response()->download(
+        $tmp,
+        'reporte-actividades.docx',
+        ['Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    )->deleteFileAfterSend(true);
+}
 
 
     private function obtenerUsuariosPermitidos(array $data, $usuario, string $rolActual): array
@@ -206,8 +306,17 @@ class ExportarActividadesController extends Controller
                 }
                 break;
             case 'anual':
-                $query->whereYear('fecha', $data['year']);
-                $rangoFechas = $data['year'];
+                $year = (int) ($data['year'] ?? 0);
+                $min  = 2000;
+                $max  = (int) now()->year;
+
+                if ($year >= $min && $year <= $max) {
+                    $query->whereYear('fecha', $year);
+                    $rangoFechas = (string) $year;
+                } else {
+                    $query->whereRaw('1 = 0');
+                    $rangoFechas = 'Año inválido';
+                }
                 break;
             case 'personalizado':
                 if (!empty($data['fecha_inicio']) && !empty($data['fecha_fin'])) {

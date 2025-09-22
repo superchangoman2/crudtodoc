@@ -97,6 +97,7 @@ class ExportarActividades extends Page implements HasForms
                         ->label('Reporte propio')
                         ->default(true)
                         ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled'])
                         ->onColor('success')
                         ->visible(fn() => auth()->user()->hasRole(['admin', 'administrador-unidad', 'gerente', 'subgerente']))
                         ->afterStateUpdated(function ($state, callable $set) {
@@ -133,6 +134,7 @@ class ExportarActividades extends Page implements HasForms
                         ->placeholder('Todas')
                         ->searchable()
                         ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled'])
                         ->visible(fn($get) => !$get('propio') && auth()->user()->hasRole('admin'))
                         ->afterStateUpdated(function ($state, callable $set) {
                             $set('gerencias_de_unidad', null);
@@ -165,6 +167,7 @@ class ExportarActividades extends Page implements HasForms
                         ->placeholder('Todas')
                         ->visible(fn($get) => !$get('propio') && filled($get('unidad_administrativa')) && auth()->user()->hasAnyRole(['admin', 'administrador-unidad']))
                         ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled'])
                         ->afterStateUpdated(function ($state, callable $set) {
                             $set('rol_usuario', null);
                             $set('usuario', null);
@@ -176,7 +179,8 @@ class ExportarActividades extends Page implements HasForms
                         ->placeholder('Todos')
                         ->searchable()
                         ->visible(fn() => auth()->user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente']))
-                        ->live()->afterStateUpdated(function ($state, callable $set) {
+                        ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled'])->afterStateUpdated(function ($state, callable $set) {
                             $set('usuario', null);
                         }),
 
@@ -247,7 +251,8 @@ class ExportarActividades extends Page implements HasForms
                             !$get('propio') &&
                             auth()->user()->hasAnyRole(['admin', 'administrador-unidad', 'gerente', 'subgerente'])
                         )
-                        ->live(),
+                        ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled']),
 
                 ]),
         ];
@@ -279,7 +284,8 @@ class ExportarActividades extends Page implements HasForms
                             'anual' => 'Anual',
                         ])
                         ->default('quincena')
-                        ->live(),
+                        ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled']),
 
                     TextInput::make('year')
                         ->label('Año')
@@ -287,31 +293,36 @@ class ExportarActividades extends Page implements HasForms
                         ->minValue(2000)
                         ->maxValue(now()->year)
                         ->visible(fn($get) => in_array($get('modo_fecha'), ['quincena', 'mes', 'anual']))
-                        ->live(),
+                        ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled']),
 
                     Select::make('quincena_seleccionada')
                     ->label('Selecciona una quincena')
                     ->options($quincenas)
                     ->visible(fn($get) => $get('modo_fecha') === 'quincena')
-                    ->live(),
+                    ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled']),
 
                     Select::make('mes_seleccionado')
                         ->label('Selecciona un mes')
                         ->options($meses)
                         ->visible(fn($get) => $get('modo_fecha') === 'mes')
-                        ->live(),
+                        ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled']),
 
                     DatePicker::make('fecha_inicio')
                         ->label('Desde')
                         ->default(now()->startOfMonth())
                         ->visible(fn($get) => $get('modo_fecha') === 'personalizado')
-                        ->live(),
+                        ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled']),
 
                     DatePicker::make('fecha_fin')
                         ->label('Hasta')
                         ->default(now())
                         ->visible(fn($get) => $get('modo_fecha') === 'personalizado')
-                        ->live(),
+                        ->live()
+                        ->extraAttributes(['wire:loading.attr' => 'disabled']),
                 ]),
         ];
     }
@@ -363,7 +374,7 @@ class ExportarActividades extends Page implements HasForms
     {
         return [
             Action::make('exportar_pdf')
-                ->label('Exportar PDF')
+                ->label('Generar PDF')
                 ->color('primary')
                 ->icon('heroicon-o-printer')
                 ->url(function () {
@@ -371,7 +382,18 @@ class ExportarActividades extends Page implements HasForms
                     $params = $this->paramsNormalizados($state);
                     return url('/exportar-pdf') . '?' . http_build_query($params);
                 })
-                ->openUrlInNewTab(),
+                ->openUrlInNewTab(true),
+
+            Action::make('exportar_doc')
+                ->label('Generar Word')
+                ->color('primary')
+                ->icon('heroicon-o-document-text')
+                ->url(function () {
+                    $state  = $this->form->getState();
+                    $params = $this->paramsNormalizados($state);
+                    return url('/exportar-doc') . '?' . http_build_query($params);
+                })
+                ->openUrlInNewTab(true),
         ];
     }
 
