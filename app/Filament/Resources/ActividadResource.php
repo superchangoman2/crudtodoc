@@ -171,7 +171,7 @@ class ActividadResource extends Resource
             ToggleColumn::make('autorizado')
                 ->label('Aut.')
                 ->alignCenter()
-                ->disabled(fn () => ! auth()->user()?->hasAnyRole(['gerente', 'administrador-unidad', 'admin']))
+                ->disabled(fn () => ! auth()->user()?->hasAnyRole(['gerente', 'subgerente', 'administrador-unidad', 'admin']))
                 ->visible(function ($record) {
                     if (! $record) return true;
                     if (! method_exists($record, 'trashed')) return true;
@@ -343,6 +343,6 @@ class ActividadResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'actividades';Desc
+        return 'actividades';
     }
 }
