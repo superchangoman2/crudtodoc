@@ -201,11 +201,21 @@ class ActividadResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-                TextColumn::make('pertenencia_nombre')
+ /*               TextColumn::make('pertenencia_nombre')
                     ->label('Pertenencia')
                     ->sortable()
                     ->searchable()
                     ->formatStateUsing(fn($state) => $state ?? 'Sin asignar'),
+*/
+                TextColumn::make('descripcion')
+                    ->label('Descripción')
+                    ->sortable()
+                    ->searchable()
+                    ->formatStateUsing(function (?string $state): string {
+                        if (blank($state)) return 'Sin descripción';
+                        
+                        return strlen($state) > 20 ? mb_substr($state, 0, 30) . '...' : $state;
+                    }),
 
                 TextColumn::make('tipoActividad.nombre')
                     ->label('Tipo de Actividad')
@@ -333,6 +343,6 @@ class ActividadResource extends Resource
 
     public static function getPluralModelLabel(): string
     {
-        return 'actividades';
+        return 'actividades';Desc
     }
 }
