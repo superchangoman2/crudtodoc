@@ -211,11 +211,7 @@ class ActividadResource extends Resource
                     ->label('Descripción')
                     ->sortable()
                     ->searchable()
-                    ->formatStateUsing(function (?string $state): string {
-                        if (blank($state)) return 'Sin descripción';
-                        
-                        return strlen($state) > 20 ? mb_substr($state, 0, 30) . '...' : $state;
-                    }),
+                    ->wrap(),
 
                 TextColumn::make('tipoActividad.nombre')
                     ->label('Tipo de Actividad')
